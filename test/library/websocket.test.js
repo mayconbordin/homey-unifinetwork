@@ -99,5 +99,21 @@ describe('WebsocketClient', () => {
             jest.useRealTimers();
         });
     });
-});
 
+    describe('message filtering', () => {
+        const { peekMessageType, HANDLED_MESSAGE_TYPES } = WebsocketClient;
+
+        it('reads meta.message from the start of a raw frame', () => {
+            expect(peekMessageType('{"meta":{"rc":"ok","message":"sta:sync"},"data":[{"mac":"x"}]}')).toBe('sta:sync');
+            expect(peekMessageType('{"meta": {"message": "device:sync"}, "data": []}')).toBe('device:sync');
+        });
+
+        it('returns null when the type is not near the start', () => {
+            expect(peekMessageType('{"data":[' + 'x'.repeat(300) + '],"meta":{"message":"events"}}')).toBeNull();
+        });
+
+        it('forwards events and device:sync only', () => {
+            expect([...HANDLED_MESSAGE_TYPES].sort()).toEqual(['device:sync', 'events']);
+        });
+    });
+});

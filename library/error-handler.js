@@ -20,6 +20,21 @@ function is401Error(error) {
 }
 
 /**
+ * Check if a UniFi OS login was rejected because the account requires MFA
+ * (HTTP 499, e.g. email code or authenticator app).
+ * @param {Error} error
+ * @returns {boolean}
+ */
+function isMfaRequiredError(error) {
+    if (!error) return false;
+    const status = (error.response && error.response.status) || error.status;
+    if (status === 499) return true;
+    const data = error.response && error.response.data;
+    const code = data && (data.code || (data.meta && data.meta.msg));
+    return typeof code === 'string' && /mfa|2fa/i.test(code);
+}
+
+/**
  * Check if error is a timeout error
  * @param {Error} error
  * @returns {boolean}
@@ -43,6 +58,9 @@ function isTimeoutError(error) {
  * @returns {string}
  */
 function getUserFriendlyMessage(error) {
+    if (isMfaRequiredError(error)) {
+        return 'This UniFi account requires MFA (e.g. an email code). Use a local-only admin account without MFA';
+    }
     if (is401Error(error)) {
         return 'Unauthorized: Check your UniFi credentials in the app settings';
     }
@@ -63,6 +81,7 @@ function getUserFriendlyMessage(error) {
 function parseError(error) {
     return {
         isAuthError: is401Error(error),
+        isMfaRequired: isMfaRequiredError(error),
         isTimeout: isTimeoutError(error),
         message: getUserFriendlyMessage(error),
         originalError: error,
@@ -71,6 +90,7 @@ function parseError(error) {
 
 module.exports = {
     is401Error,
+    isMfaRequiredError,
     isTimeoutError,
     getUserFriendlyMessage,
     parseError,

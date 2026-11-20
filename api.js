@@ -1,7 +1,8 @@
 const ApiClient = require("./library/apiclient");
+const ErrorHandler = require("./library/error-handler");
 module.exports = {
     async getSites({homey, query}) {
-        const result = await homey.app.api.unifi.getSites();
+        const result = await homey.app.api.getSites();
         return result;
     },
     async getStatus({ homey, query }) {
@@ -9,9 +10,9 @@ module.exports = {
     },
     async getWebsocketStatus({ homey, query }) {
         if (!homey.app.api.websocket) {
-            return 'Disabled';
+            return homey.app.websocketDisabledReason || 'Disabled';
         }
-        return homey.app.api.websocket.isWebsocketConnected() ? 'Connected' : 'Unknown';
+        return (await homey.app.api.websocket.isWebsocketConnected()) ? 'Connected' : 'Unknown';
     },
     async getLastWebsocketMessageTime({ homey, query }) {
         if (!homey.app.api.websocket) {
@@ -22,21 +23,27 @@ module.exports = {
     async testCredentials({homey, body}) {
         try {
             const api = new ApiClient({homey});
-            api.setUnifiObject(body.host, body.port, body.user, body.pass, body.site);
-            await api.unifi.login(body.user, body.pass);
+            const apiKey = body.apiKey ? String(body.apiKey).trim() : null;
+            api.setUnifiObject(body.host, body.port, body.user, body.pass, body.site, body.sslverify === true, apiKey);
+            await api.login(body.user, body.pass);
             await api.unifi.getAccessDevices();
             await api.unifi.getClientDevices();
             await api.unifi.getAllUsers();
-            await api.unifi.logout();
+            // With an API key, username/password are only used for real-time events — verify them too
+            if (apiKey && body.user && body.pass) {
+                await api.getWebsocketSession(body.host, body.port, body.user, body.pass, body.site, body.sslverify === true);
+            }
+            await api.logout();
 
             return {
                 status: 'success',
             };
         } catch (error) {
-            homey.app.error('testCredentials error', error.message);
+            const message = ErrorHandler.getUserFriendlyMessage(error);
+            homey.app.error('testCredentials error', message);
             return {
                 status: 'failure',
-                error: error.message,
+                error: message,
             };
         }
     }

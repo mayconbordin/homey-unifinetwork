@@ -1,9 +1,25 @@
 const WebSocket = require("ws");
 const BaseClass = require("./baseclass");
 
+// Message types forwarded to the app. Everything else (sta:sync, unifi-device:sync, ...)
+// is high-volume and unused, so it is skipped before JSON parsing.
+const HANDLED_MESSAGE_TYPES = new Set(['events', 'device:sync']);
+const MESSAGE_TYPE_RE = /"message"\s*:\s*"([^"]+)"/;
+
+/**
+ * Cheaply read meta.message from the start of a raw frame without parsing it.
+ * Returns null when it can't be determined (caller then parses the full frame).
+ */
+function peekMessageType(raw) {
+    const match = MESSAGE_TYPE_RE.exec(raw.slice(0, 200));
+    return match ? match[1] : null;
+}
+
 class WebsocketClient extends BaseClass {
-    constructor(options, homey) {
+    constructor(options, homey, session = null) {
         super();
+        // node-unifi controller holding the logged-in session (cookie jar)
+        this._session = session;
         this.opts = options || {};
         this.opts.host = (typeof (this.opts.host) === 'undefined' ? 'unifi' : this.opts.host);
         this.opts.port = (typeof (this.opts.port) === 'undefined' ? 8443 : this.opts.port);
@@ -52,10 +68,14 @@ class WebsocketClient extends BaseClass {
                 try { this._ws.terminate(); } catch (e) {}
             }
 
-            const cookies = await this.homey.app.api.unifi._cookieJar.getCookieString(this._baseurl.href);
+            const session = this._session || this.homey.app.api.unifi;
+            if (!session || !session._cookieJar) {
+                throw new Error('WebSocket requires a username/password session');
+            }
+            const cookies = await session._cookieJar.getCookieString(this._baseurl.href);
 
             let eventsUrl = `wss://${this._baseurl.host}/wss/s/${this.opts.site}/events`;
-            if (this.homey.app.api.unifi._unifios) {
+            if (session._unifios) {
                 eventsUrl = `wss://${this._baseurl.host}/proxy/network/wss/s/${this.opts.site}/events`;
             }
 
@@ -106,13 +126,14 @@ class WebsocketClient extends BaseClass {
                 }
 
                 try {
+                    const peeked = peekMessageType(message);
+                    if (peeked !== null && !HANDLED_MESSAGE_TYPES.has(peeked)) return;
+
                     const parsed = JSON.parse(message);
                     if ('meta' in parsed && Array.isArray(parsed.data)) {
-                        // Only process event messages — skip device:sync, sta:sync, etc.
-                        if (parsed.meta.message !== 'events') return;
+                        if (!HANDLED_MESSAGE_TYPES.has(parsed.meta.message)) return;
                         for (const entry of parsed.data) {
-                            //                       this.homey.app.debug(`${JSON.stringify(entry)}`);
-                            // Pass meta so parseWebsocketMessage can identify device:sync events
+                            // Pass meta so parseWebsocketMessage can tell events from device:sync
                             this.homey.app.parseWebsocketMessage(entry, parsed.meta);
                         }
                     }
@@ -215,3 +236,5 @@ class WebsocketClient extends BaseClass {
 }
 
 module.exports = WebsocketClient;
+module.exports.peekMessageType = peekMessageType;
+module.exports.HANDLED_MESSAGE_TYPES = HANDLED_MESSAGE_TYPES;

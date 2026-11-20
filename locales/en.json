@@ -22,15 +22,15 @@
     },
     "settings": {
         "title": "UniFi Network Settings",
-        "instruction": "Log in with the credentials of the UniFi Network user.",
+        "instruction": "Connect with an API key (recommended, UniFi Network 9+) or with the credentials of a local UniFi Network user.",
         "nvr": "Server details",
         "nvrText": "Use port 443 for UniFiOS and port 8443 for Docker / Standalone.",
         "nvrip": "IP address",
         "nvrport": "Port",
         "credentials": "User credentials",
-        "credentialsText": "MFA Disabled and Local Admin User",
+        "credentialsText": "Optional when an API key is set: only used for real-time WebSocket events. Use a local admin user with MFA disabled.",
         "username": "Username",
-        "password": "Password (min 32 chars)",
+        "password": "Password",
         "apply": "Apply",
         "test": "Test credentials",
         "test_status": {
@@ -52,8 +52,8 @@
         "applicationFlows": "Enable application flows",
         "sslverify": "Verify SSL certificate",
         "sslverify_hint": "Default: unchecked (recommended for most setups). Only enable this if your controller has a valid trusted TLS certificate (not self-signed).",
-        "apikey": "API Key (optional)",
-        "apikey_hint": "UniFi OS 7+ only. Create an API key in UniFi OS → Settings → API. When set, v1 REST calls use Bearer auth instead of session cookie."
+        "apikey": "API Key (recommended)",
+        "apikey_hint": "Create one in UniFi Network → Settings → Control Plane → Integrations. When set, all REST calls use the X-API-KEY header; username/password are only used for the real-time WebSocket."
     },
     "capabilities": {
         "measure_rssi_2g": "RSSI 2.4 GHz",

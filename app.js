@@ -5,6 +5,7 @@ const ApiClient = require('./library/apiclient');
 const UnifiConstants = require('./library/constants');
 const {formatForLog} = require('./library/sanitise');
 const ErrorHandler = require('./library/error-handler');
+const DeviceSyncThrottle = require('./library/device-sync-throttle');
 
 class UnifiNetwork extends Homey.App {
     /**
@@ -20,6 +21,7 @@ class UnifiNetwork extends Homey.App {
         this.updateAccessPointListInterval = null;
 
         this._recentEventIds = new Set();
+        this._deviceSyncThrottle = new DeviceSyncThrottle({minIntervalMs: 10 * 1000});
         this.onUninit = this.onUninit.bind(this);
 
         this._refreshAuthTokensnterval = 60 * 60 * 1000; // 1 hour
@@ -61,9 +63,15 @@ class UnifiNetwork extends Homey.App {
      * @param {object} [meta]  - the meta object from the WebSocket message (contains message type)
      */
     parseWebsocketMessage(payload, meta) {
+        // Real-time switch / AP state (full device objects, ~1/s per device)
+        if (meta && meta.message === 'device:sync') {
+            this._handleDeviceSync(payload);
+            return;
+        }
+
         let that = this;
 
-        // Ignore non-event payloads (no key field) — these are stats syncs, not events
+        // Ignore non-event payloads (no key field)
         if (!payload.key) return;
 
         // Deduplication guard — skip events already processed within the last 60 s
@@ -169,59 +177,57 @@ class UnifiNetwork extends Homey.App {
             }
         }
 
-        // device:sync is independent of subsystem — check separately so it is never
-        // accidentally swallowed by the wlan/lan branches above
-        if (meta && meta.message === 'device:sync' && payload.mac) {
-            // Real-time switch status update — debug only to avoid log flooding (~30s cadence per switch)
-            that.homey.app.debug(`[websocket] [device:sync]: mac=${payload.mac}`);
-
-            // Update port up/down and PoE on/off state on the switch device itself
-            let switchDriver;
-            try {
-                switchDriver = that.homey.drivers.getDriver('network-switch');
-            } catch (e) { /* driver not yet initialised */ }
-            if (switchDriver) {
-                const switchDevice = switchDriver.getUnifiDeviceById(payload.mac);
-                if (switchDevice) {
-                    switchDevice.onStatusChange(payload);
-                }
-            }
-
-            // Push real-time state/client-count/uptime updates to access-point devices
-            let apDriver;
-            try { apDriver = that.homey.drivers.getDriver('access-point'); } catch (e) { /* not ready */ }
-            if (apDriver) {
-                const apDevice = apDriver.getUnifiDeviceById(payload.mac);
-                if (apDevice) {
-                    apDevice.onUpdateMessagePayload(payload);
-                }
-            }
-
-            // Push live PoE wattage to any device powered by a port on this switch.
-            // Covers cable-clients, access-points, and PoE-powered downstream switches —
-            // all use PoePowerMixin and store _swMac/_swPort for exactly this lookup.
-            if (payload.port_table) {
-                for (const driverName of ['cable-client', 'access-point', 'network-switch']) {
-                    let driver;
-                    try {
-                        driver = that.homey.drivers.getDriver(driverName);
-                    } catch (e) { /* driver not yet initialised — skip */ continue; }
-                    driver.getDevices().forEach(async device => {
-                        if (device._swMac === payload.mac && device._swPort) {
-                            const port = payload.port_table[device._swPort - 1];
-                            if (port && port.port_poe && typeof port.poe_power !== 'undefined') {
-                                if (typeof device._ensurePoeCapabilities === 'function') {
-                                    await device._ensurePoeCapabilities(port);
-                                }
-                                device.onPoeUpdate(port);
-                            }
-                        }
-                    });
-                }
-            }
-
-        }
         that = null;
+    }
+
+    /**
+     * Push a device:sync payload (full UniFi device object) to the matching
+     * network-switch / access-point devices and to any device powered by one
+     * of its PoE ports.
+     * @param {object} payload
+     */
+    _handleDeviceSync(payload) {
+        if (!payload || !payload.mac || !this._deviceSyncThrottle.shouldProcess(payload)) return;
+        this.debug(`[websocket] [device:sync]: mac=${payload.mac} type=${payload.type}`);
+
+        const getDriver = (name) => {
+            try { return this.homey.drivers.getDriver(name); } catch (e) { return null; } // driver not ready yet
+        };
+
+        if (payload.type === 'usw') {
+            const switchDriver = getDriver('network-switch');
+            const switchDevice = switchDriver && switchDriver.getUnifiDeviceById(payload.mac);
+            if (switchDevice) {
+                switchDevice.onStatusChange(payload);
+                switchDevice.onUpdateMessagePayload(payload);
+            }
+        } else if (payload.type === 'uap') {
+            const apDriver = getDriver('access-point');
+            const apDevice = apDriver && apDriver.getUnifiDeviceById(payload.mac);
+            if (apDevice) {
+                apDevice.onUpdateMessagePayload(payload);
+            }
+        }
+
+        // Live PoE wattage for any device powered by a port on this switch/gateway.
+        // cable-clients, access-points and PoE-powered switches all use PoePowerMixin
+        // and store _swMac/_swPort for exactly this lookup.
+        if (Array.isArray(payload.port_table)) {
+            for (const driverName of ['cable-client', 'access-point', 'network-switch']) {
+                const driver = getDriver(driverName);
+                if (!driver) continue;
+                for (const device of driver.getDevices()) {
+                    if (device._swMac !== payload.mac || !device._swPort) continue;
+                    const port = payload.port_table.find(p => p.port_idx === Number(device._swPort))
+                        || payload.port_table[device._swPort - 1];
+                    if (port && port.port_poe && typeof port.poe_power !== 'undefined') {
+                        Promise.resolve(typeof device._ensurePoeCapabilities === 'function' ? device._ensurePoeCapabilities() : null)
+                            .then(() => device.onPoeUpdate(port))
+                            .catch(err => this.debug(`[device:sync] PoE update failed for ${device.getName()}: ${err.message || err}`));
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -242,7 +248,7 @@ class UnifiNetwork extends Homey.App {
             this.api.websocket.destroy();
         }
         if (this.api && this.api.unifi) {
-            try { await this.api.unifi.logout(); } catch (e) {}
+            try { await this.api.logout(); } catch (e) {}
         }
         delete this.api;
         delete this.accessPointList;
@@ -265,16 +271,14 @@ class UnifiNetwork extends Homey.App {
     async _initActionCards() {
         this.debug('UnifiNetwork init Action Cards');
 
-        // WLAN toggle action (v2.6) — requires API key + UniFi OS 7+
+        // WLAN toggle action (v2.6)
         const toggleWlan = this.homey.flow.getActionCard(UnifiConstants.ACTION_TOGGLE_WLAN);
         toggleWlan.registerArgumentAutocompleteListener('wlan_id', async (query) => {
             try {
-                const site = this.settings && this.settings.site ? this.settings.site : 'default';
-                const response = await this.api._callV1('GET', `/sites/${site}/wifi/broadcasts`);
-                const broadcasts = Array.isArray(response.data) ? response.data : (Array.isArray(response) ? response : []);
-                return broadcasts
-                    .filter(w => !query || w.name.toLowerCase().includes(query.toLowerCase()))
-                    .map(w => ({ id: w.id, name: w.name, description: w.enabled ? 'Enabled' : 'Disabled' }));
+                const wlans = await this.api.getWlans();
+                return wlans
+                    .filter(w => !query || (w.name || '').toLowerCase().includes(query.toLowerCase()))
+                    .map(w => ({ id: w._id, name: w.name, description: w.enabled ? 'Enabled' : 'Disabled' }));
             } catch (err) {
                 this.error('toggle_wlan autocomplete error:', err.message);
                 return [];
@@ -283,9 +287,8 @@ class UnifiNetwork extends Homey.App {
 
         toggleWlan.registerRunListener(async (args) => {
             try {
-                const site = this.settings && this.settings.site ? this.settings.site : 'default';
                 const enabled = args.enabled === 'true';
-                await this.api._callV1('PATCH', `/sites/${site}/wifi/broadcasts/${args.wlan_id.id}`, { enabled });
+                await this.api.setWlanEnabled(args.wlan_id.id, enabled);
                 this.debug(`toggle_wlan: set ${args.wlan_id.name} enabled=${enabled}`);
             } catch (error) {
                 const parsed = ErrorHandler.parseError(error);
@@ -302,13 +305,8 @@ class UnifiNetwork extends Homey.App {
         const apRestart = this.homey.flow.getActionCard(UnifiConstants.ACTION_ACCESS_POINT_RESTART);
         apRestart.registerRunListener(async (args) => {
             try {
-                const site = this.settings && this.settings.site ? this.settings.site : 'default';
                 const deviceMac = args.device.getData().id;
-                // Resolve the device _id from the MAC via the UniFi API
-                const devices = await this.api.unifi.getAccessDevices(deviceMac);
-                const ap = devices.find(d => d.mac === deviceMac);
-                if (!ap) throw new Error(`Access point ${deviceMac} not found`);
-                await this.api.restartAccessPoint(ap._id, site);
+                await this.api.restartAccessPoint(deviceMac);
                 this.debug(`access_point_restart: restarted ${args.device.getName()} (${deviceMac})`);
             } catch (error) {
                 const parsed = ErrorHandler.parseError(error);
@@ -489,7 +487,8 @@ class UnifiNetwork extends Homey.App {
         // [{"authorized_by":"none","ap_mac":"d0:21:f9:87:4e:9d","is_returning":true,"roam_count":0,"ip":"192.168.25.213","start":1761736094,"channel":44,"mac":"4e:9e:45:cf:a7:53","radio":"na","duration":146,"hostname":"iPhone","user_id":"6900765fe38abd4579dccfc8","bytes":1349575,"site_id":"6550cbaad28ec670541702d5","rx_bytes":330815,"end":1761764894,"_id":"6901f59ee38abd4579dd5e06","user_agent":"Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148","tx_bytes":1018760,"expired":false},{"authorized_by":"none","ap_mac":null,"is_returning":false,"roam_count":0,"ip":"192.168.25.213","start":1761638072,"channel":0,"mac":"4e:9e:45:cf:a7:53","radio":null,"duration":522,"hostname":"iPhone","user_id":"6900765fe38abd4579dccfc8","bytes":1072749,"site_id":"6550cbaad28ec670541702d5","rx_bytes":209774,"end":1761666872,"_id":"690076b8e38abd4579dccfde","user_agent":"Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148","tx_bytes":862975,"expired":true}
         const areThereGuests = this.homey.flow.getConditionCard('guests_connected');
         areThereGuests.registerRunListener(async () => {
-            const devices = await this.homey.app.api.unifi.getUsers();
+            // Only currently connected clients count as "guests connected"
+            const devices = await this.homey.app.api.unifi.getClientDevices();
             const guestClients = devices.filter(function(record){
                 return record.is_guest === true;
             });
@@ -661,20 +660,21 @@ class UnifiNetwork extends Homey.App {
             if (this.loggedIn) {
                 this.loggedIn = false;
                 try {
-                    await this.api.unifi.logout();
+                    await this.api.logout();
                 } catch (e) {
                     this.error(`[_appLogin] logout failed: ${e.message || e}`);
                 }
             }
 
             this.homey.api.realtime(UnifiConstants.REALTIME_STATUS, 'Connecting');
-            this.api.setUnifiObject(settings.host, settings.port, settings.user, settings.pass, settings.site, settings.sslverify === true);
-            this.api.setApiKey(settings.apiKey || null, settings.host, settings.port);
+            const apiKey = settings.apiKey ? String(settings.apiKey).trim() : null;
+            this.api.setUnifiObject(settings.host, settings.port, settings.user, settings.pass, settings.site, settings.sslverify === true, apiKey);
+            this.debug(`Authentication mode: ${apiKey ? 'API key' : 'username/password'}`);
 
             await (async () => {
                 try {
-                    // LOGIN
-                    await this.api.unifi.login(settings.user, settings.pass);
+                    // LOGIN (validates the API key, or creates a session)
+                    await this.api.login(settings.user, settings.pass);
                     this.homey.api.realtime(UnifiConstants.REALTIME_STATUS, 'Connected');
                     await this.setLoggedIn(true);
                     this.debug('We are logged in!');
@@ -686,8 +686,45 @@ class UnifiNetwork extends Homey.App {
                     this.updateAccessPointList();
 
                     if ("pullmethode" in settings && settings.pullmethode === '1') {
+                        // The events WebSocket does not accept API keys — it needs a
+                        // username/password session. Without one, polling keeps devices updated.
+                        // An MFA account would need a new code on every (hourly) re-login, and each
+                        // attempt may email the user — so after an MFA rejection, stop trying until
+                        // the credentials change.
+                        const credentialsKey = `${settings.host}|${settings.user}|${settings.pass}`;
+                        let session = null;
+                        let disabledReason = 'Disabled (needs username/password)';
+                        if (this._wsMfaBlockedFor === credentialsKey) {
+                            disabledReason = 'Disabled (account requires MFA)';
+                        } else {
+                            try {
+                                session = await this.api.getWebsocketSession(settings.host, settings.port, settings.user, settings.pass, settings.site, settings.sslverify === true);
+                                this._wsMfaBlockedFor = null;
+                            } catch (error) {
+                                const parsed = ErrorHandler.parseError(error);
+                                if (parsed.isMfaRequired) {
+                                    this._wsMfaBlockedFor = credentialsKey;
+                                    disabledReason = 'Disabled (account requires MFA)';
+                                    this._notifyError(error);
+                                } else {
+                                    disabledReason = 'Disabled (login failed)';
+                                }
+                                this.error(`WebSocket login failed, using polling only: ${parsed.message}`);
+                            }
+                        }
+                        if (!session) {
+                            if (this.api.websocket) {
+                                this.api.websocket.destroy();
+                                this.api.websocket = null;
+                            }
+                            this.websocketDisabledReason = disabledReason;
+                            this.debug(`WebSocket ${disabledReason}; falling back to polling`);
+                            this.homey.api.realtime(UnifiConstants.REALTIME_WEBSOCKET, disabledReason);
+                            return;
+                        }
+                        this.websocketDisabledReason = null;
                         // LISTEN for WebSocket events
-                        this.api.setWebSocketObject(settings.host, settings.port, settings.user, settings.pass, settings.site, settings.sslverify === true);
+                        this.api.setWebSocketObject(settings.host, settings.port, settings.user, settings.pass, settings.site, settings.sslverify === true, session);
                         this.api.websocket.listen().then((connected) => {
                             if (connected) {
                                 this.debug('WebSocket is connected');
@@ -723,30 +760,23 @@ class UnifiNetwork extends Homey.App {
 
     // {"user":"ea:5b:28:b2:00:b5","ssid":"Ziggo6322902","ap":"d0:21:f9:89:df:f9","radio":"na","channel":"40","channelWidth":"80","hostname":"iPhone","ap_model":"UAP6MP","ap_name":"BenedenAP","ap_displayName":"BenedenAP","key":"EVT_WU_Connected","subsystem":"wlan","is_negative":false,"site_id":"6550cbaad28ec670541702d5","time":1761598567827,"datetime":"2025-10-27T20:56:07Z","msg":"User[ea:5b:28:b2:00:b5] has connected to AP[d0:21:f9:89:df:f9] with SSID \"Ziggo6322902\" on \"channel 40(na)\""
 
-    onIsConnected(isConnected, payload) {
+    async onIsConnected(isConnected, payload) {
         const deviceName = this.homey.app.api.getDeviceName(payload);
         this.debug(`Device ${deviceName} (${payload.user}) is ${isConnected ? 'connected' : 'disconnected'}`);
-        if (isConnected) {
-            const device = this.api.getDeviceByMac(payload.user);
-            const tokens = {
-                mac: (payload.user === null || typeof payload.user === 'undefined') ? "" : payload.user,
-                name: (deviceName === null || typeof deviceName === 'undefined') ? "" : deviceName,
-                essid: (payload.ssid === null || typeof payload.ssid === 'undefined') ? "" : payload.ssid,
-                ipAddress: (device.last_ip === null || typeof device.last_ip === 'undefined') ? "" : device.last_ip,
-            };
-
-            this.homey.app._clientConnected.trigger(tokens);
-
-        } else {
-            const device = this.api.getDeviceByMac(payload.user);
-            const tokens = {
-                mac: (payload.user === null || typeof payload.user === 'undefined') ? "" : payload.user,
-                name: (deviceName === null || typeof deviceName === 'undefined') ? "" : deviceName,
-                essid: (payload.ssid === null || typeof payload.ssid === 'undefined') ? "" : payload.ssid,
-                ipAddress: (device.last_ip === null || typeof device.last_ip === 'undefined') ? "" : device.last_ip,
-            };
-            this.homey.app._clientDisconnected.trigger(tokens);
+        let device = null;
+        try {
+            device = payload.user ? await this.api.getDeviceByMac(payload.user) : null;
+        } catch (error) {
+            this.debug(`onIsConnected: client lookup failed: ${error.message || error}`);
         }
+        const tokens = {
+            mac: payload.user || '',
+            name: deviceName || '',
+            essid: payload.ssid || '',
+            ipAddress: (device && device.last_ip) || '',
+        };
+        const card = isConnected ? this._clientConnected : this._clientDisconnected;
+        card.trigger(tokens).catch(err => this.error(`[onIsConnected] trigger failed: ${err.message || err}`));
     }
 
     async setLoggedIn(loggedIn) {

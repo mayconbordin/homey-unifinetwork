@@ -2,247 +2,182 @@
 
 const BaseClass = require('./baseclass');
 const Unifi = require('node-unifi');
-const UnifiConstants = require('./constants');
 const WebsocketClient = require('./websocket');
+const UnifiApiKeyController = require('./unifi-apikey-controller');
 
 class ApiClient extends BaseClass {
 
     constructor({homey}) {
         super();
-        this.unifi = null;
+        this.unifi = null;          // REST client (API-key controller or node-unifi session)
+        this.sessionUnifi = null;   // node-unifi session used only for the events WebSocket
         this.websocket = null;
         this.homey = homey;
         this.loggedInStatus = 0;
-        this._apiKey = null;
-        this._v1BaseUrl = null;
     }
 
-    setUnifiObject(hostName, portNumber, userName, passWord, siteName, sslVerify) {
+    /**
+     * Create the REST client. With an API key the controller is accessed via the
+     * X-API-KEY header (UniFi OS / Network 9+). Without one we fall back to a
+     * username/password session through node-unifi (older controllers).
+     */
+    setUnifiObject(hostName, portNumber, userName, passWord, siteName, sslVerify, apiKey = null) {
         // Migration shim: if sslVerify is undefined (existing installs) default to false
         const sslverify = typeof sslVerify === 'boolean' ? sslVerify : false;
-        this.unifi = new Unifi.Controller({host: hostName, port: portNumber, sslverify, site: siteName});
+        const site = siteName || 'default';
+        const port = portNumber || 443;
+        this.sessionUnifi = null;
+
+        if (apiKey) {
+            this.unifi = new UnifiApiKeyController({host: hostName, port, site, sslverify, apiKey});
+        } else {
+            this.unifi = new Unifi.Controller({host: hostName, port, sslverify, site});
+        }
 
         return this.unifi;
     }
 
-    setWebSocketObject(hostName, portNumber, userName, passWord, siteName, sslVerify) {
+    /** True when REST calls use an API key. */
+    usesApiKey() {
+        return !!(this.unifi && this.unifi.isApiKey);
+    }
+
+    /**
+     * Log in to the controller. In API-key mode this validates the key; in
+     * session mode it performs the username/password login.
+     */
+    async login(userName, passWord) {
+        return this.unifi.login(userName, passWord);
+    }
+
+    async logout() {
+        if (this.sessionUnifi) {
+            try { await this.sessionUnifi.logout(); } catch (_e) { /* ignore */ }
+        }
+        if (this.unifi) {
+            await this.unifi.logout();
+        }
+    }
+
+    /**
+     * The events WebSocket only accepts a session cookie, not an API key.
+     * Returns the node-unifi controller holding that session, logging in on demand
+     * (API-key mode) or reusing the REST session (password mode).
+     */
+    async getWebsocketSession(hostName, portNumber, userName, passWord, siteName, sslVerify) {
+        if (!this.usesApiKey()) return this.unifi;
+        if (!userName || !passWord) return null;
+        const sslverify = typeof sslVerify === 'boolean' ? sslVerify : false;
+        const session = new Unifi.Controller({host: hostName, port: portNumber || 443, sslverify, site: siteName || 'default'});
+        await session.login(userName, passWord);
+        this.sessionUnifi = session;
+        return session;
+    }
+
+    setWebSocketObject(hostName, portNumber, userName, passWord, siteName, sslVerify, session = null) {
         // Cleanly shut down old client (stops reconnect loop + terminates socket)
         if (this.websocket) {
             this.websocket.destroy();
         }
         const sslverify = typeof sslVerify === 'boolean' ? sslVerify : false;
         const options = {host: hostName, port: portNumber, sslverify, site: siteName};
-        this.websocket = new WebsocketClient(options, this.homey);
+        this.websocket = new WebsocketClient(options, this.homey, session || this.unifi);
     }
 
-    /**
-     * Store an optional API key for v1 REST calls.
-     * @param {string|null} apiKey
-     * @param {string} host
-     * @param {string|number} port
-     */
-    setApiKey(apiKey, host, port) {
-        this._apiKey = apiKey || null;
-        this._v1BaseUrl = `https://${host}:${port}/proxy/network/v1`;
-    }
-
-    /**
-     * Make an authenticated call to the UniFi v1 REST API.
-     * Uses Bearer token if an API key is configured, otherwise falls back to
-     * the session cookie maintained by node-unifi.
-     *
-     * @param {string} method  HTTP method (GET, POST, PATCH, DELETE)
-     * @param {string} path    Path relative to /proxy/network/v1 (e.g. '/sites')
-     * @param {object|null} body  Optional request body
-     * @returns {Promise<object>}
-     */
-    async _callV1(method, path, body = null) {
-        const https = require('https');
-        const url = `${this._v1BaseUrl}${path}`;
-
-        const headers = {
-            'Content-Type': 'application/json',
-            Accept: 'application/json',
-        };
-
-        if (this._apiKey) {
-            headers['Authorization'] = `Bearer ${this._apiKey}`;
-        } else {
-            // Fallback: use session cookie from node-unifi cookie jar
-            try {
-                const baseUrl = new URL(this._v1BaseUrl);
-                const cookies = await this.unifi._cookieJar.getCookieString(baseUrl.origin);
-                if (cookies) headers['Cookie'] = cookies;
-            } catch (_e) {
-                // Cookie fallback unavailable — request will proceed without auth
-            }
-        }
-
-        const sslVerify = this.unifi ? this.unifi._sslverify !== false : false;
-
-        return new Promise((resolve, reject) => {
-            const reqUrl = new URL(url);
-            const payload = body ? JSON.stringify(body) : null;
-            if (payload) headers['Content-Length'] = Buffer.byteLength(payload);
-
-            const options = {
-                hostname: reqUrl.hostname,
-                port: reqUrl.port || 443,
-                path: reqUrl.pathname + reqUrl.search,
-                method,
-                headers,
-                rejectUnauthorized: sslVerify,
-            };
-
-            const req = https.request(options, (res) => {
-                let data = '';
-                res.on('data', (chunk) => { data += chunk; });
-                res.on('end', () => {
-                    try {
-                        resolve(JSON.parse(data));
-                    } catch (_e) {
-                        resolve(data);
-                    }
-                });
-            });
-
-            req.on('error', reject);
-            if (payload) req.write(payload);
-            req.end();
-        });
+    async getSites() {
+        return this.unifi.getSites();
     }
 
     async getAccessPoints() {
-        return new Promise((resolve, reject) => {
-            this.unifi.getAccessDevices()
-                .then(response => {
-                    response = response.filter(obj => obj.adopted === true);
-                    response = response.filter(obj => obj.type === 'uap');
-                    if (response) {
-                        return resolve(response);
-                    } else {
-                        return reject(new Error('Error obtaining AccessPoint devices.'));
-                    }
-                })
-                .catch(error => reject(error));
-        });
+        const response = await this.unifi.getAccessDevices();
+        if (!Array.isArray(response)) throw new Error('Error obtaining AccessPoint devices.');
+        return response.filter(obj => obj.adopted === true && obj.type === 'uap');
     }
 
     async getWiFiDevices() {
-        return new Promise((resolve, reject) => {
-            this.unifi.getClientDevices()
-                .then(response => {
-                    response = response.filter(obj => obj.is_wired === false);
-                    if (response) {
-                        return resolve(response);
-                    } else {
-                        return reject(new Error('Error obtaining WiFi devices.'));
-                    }
-                })
-                .catch(error => reject(error));
-        });
+        const response = await this.unifi.getClientDevices();
+        if (!Array.isArray(response)) throw new Error('Error obtaining WiFi devices.');
+        return response.filter(obj => obj.is_wired === false);
     }
 
     async getCableDevices() {
-        return new Promise((resolve, reject) => {
-            this.unifi.getClientDevices()
-                .then(response => {
-                    response = response.filter(obj => obj.is_wired === true);
-                    if (response) {
-                        return resolve(response);
-                    } else {
-                        return reject(new Error('Error obtaining cable devices.'));
-                    }
-                })
-                .catch(error => reject(error));
-        });
+        const response = await this.unifi.getClientDevices();
+        if (!Array.isArray(response)) throw new Error('Error obtaining cable devices.');
+        return response.filter(obj => obj.is_wired === true);
     }
 
     async getNetworkSwitches() {
-        return new Promise((resolve, reject) => {
-            this.unifi.getAccessDevices()
-                .then(response => {
-                    response = response.filter(obj => obj.type === 'usw');
-                    if (response) {
-                        return resolve(response);
-                    } else {
-                        return reject(new Error('Error obtaining network switches.'));
-                    }
-                })
-                .catch(error => reject(error));
-        });
+        const response = await this.unifi.getAccessDevices();
+        if (!Array.isArray(response)) throw new Error('Error obtaining network switches.');
+        return response.filter(obj => obj.type === 'usw');
     }
 
-    async powerOnDevice(macAddress, portIndex) {
-        this.unifi.getAccessDevices(macAddress).then(async (deviceData) => {
-            const device = deviceData.filter(obj => {
-                return obj.mac === macAddress
-            });
-            const deviceId = device[0]._id;
-            const portOverrides = device[0].port_overrides;
-            // turn the poe back on
-            for (const item of portOverrides) {
-                if (item.port_idx === Number.parseInt(portIndex, 10)) {
-                    item.poe_mode = 'auto';
-                }
-            }
-            await this.unifi.setDeviceSettingsBase(deviceId, {port_overrides: portOverrides});
-        }).catch(error => this.homey.app.error(error));
-    }
-
-    async powerOffDevice(macAddress, portIndex) {
-        this.unifi.getAccessDevices(macAddress).then(async (deviceData) => {
-            const device = deviceData.filter(obj => {
-                return obj.mac === macAddress
-            });
-            const deviceId = device[0]._id;
-            const portOverrides = device[0].port_overrides;
-            // Set PoE mode to 'off' for the specified port
-            for (const item of portOverrides) {
-                if (item.port_idx === Number.parseInt(portIndex, 10)) {
-                    item.poe_mode = 'off';
-                }
-            }
-            await this.unifi.setDeviceSettingsBase(deviceId, {port_overrides: portOverrides});
-        }).catch(error => this.homey.app.error(error));
-    }
-
-
-
-    async powerCycleDevice(macAddress, portIndex) {
-        this.unifi.getAccessDevices(macAddress).then(async (deviceData) => {
-            const device = deviceData.filter(obj => {
-                return obj.mac === macAddress
-            });
-            const deviceId = device[0]._id;
-            const portOverrides = device[0].port_overrides;
-            // Set PoE mode to 'off' for the specified port
-            for (const item of portOverrides) {
-                if (item.port_idx === Number.parseInt(portIndex, 10)) {
-                    item.poe_mode = 'off';
-                }
-            }
-            await this.unifi.setDeviceSettingsBase(deviceId, {port_overrides: portOverrides});
-            // sleep for 1 second
-            await new Promise(resolve => setTimeout(resolve, 500));
-            // turn the poe back on
-            for (const item of portOverrides) {
-                if (item.port_idx === Number.parseInt(portIndex, 10)) {
-                    item.poe_mode = 'auto';
-                }
-            }
-            await this.unifi.setDeviceSettingsBase(deviceId, {port_overrides: portOverrides});
-        }).catch(error => this.homey.app.error(error));
+    /** Get a single adopted device (switch / AP) from /stat/device by MAC. */
+    async _getDevice(macAddress) {
+        const deviceData = await this.unifi.getAccessDevices(macAddress);
+        const device = (deviceData || []).find(obj => obj.mac === macAddress);
+        if (!device) throw new Error(`Device ${macAddress} not found`);
+        return device;
     }
 
     /**
-     * Restart (reboot) an access point via the UniFi v1 REST API.
-     * Requires an API key or valid session cookie.
-     * @param {string} deviceId  The UniFi device _id (not the MAC)
-     * @param {string} siteId    The site name / id (e.g. 'default')
+     * Set the PoE mode of a switch port via port_overrides. Ports without an
+     * existing override get one added (UniFi only lists customised ports).
      */
-    async restartAccessPoint(deviceId, siteId) {
-        return this._callV1('POST', `/sites/${siteId}/devices/${deviceId}/actions`, { action: 'restart' });
+    async _setPoeMode(macAddress, portIndex, poeMode) {
+        const device = await this._getDevice(macAddress);
+        const portIdx = Number.parseInt(portIndex, 10);
+        const portOverrides = Array.isArray(device.port_overrides) ? device.port_overrides : [];
+        const override = portOverrides.find(item => item.port_idx === portIdx);
+        if (override) {
+            override.poe_mode = poeMode;
+        } else {
+            portOverrides.push({port_idx: portIdx, poe_mode: poeMode});
+        }
+        await this.unifi.setDeviceSettingsBase(device._id, {port_overrides: portOverrides});
+    }
+
+    async powerOnDevice(macAddress, portIndex) {
+        return this._setPoeMode(macAddress, portIndex, 'auto');
+    }
+
+    async powerOffDevice(macAddress, portIndex) {
+        return this._setPoeMode(macAddress, portIndex, 'off');
+    }
+
+    async powerCycleDevice(macAddress, portIndex) {
+        const portIdx = Number.parseInt(portIndex, 10);
+        if (this.usesApiKey()) {
+            const {siteId, deviceId} = await this.unifi.getIntegrationDeviceId(macAddress);
+            return this.unifi.integration('POST', `/sites/${siteId}/devices/${deviceId}/interfaces/ports/${portIdx}/actions`, {action: 'POWER_CYCLE'});
+        }
+        return this.unifi.powerCycleSwitchPort(macAddress, portIdx);
+    }
+
+    /**
+     * Restart (reboot) an adopted device (e.g. an access point).
+     * @param {string} macAddress
+     */
+    async restartAccessPoint(macAddress) {
+        if (this.usesApiKey()) {
+            const {siteId, deviceId} = await this.unifi.getIntegrationDeviceId(macAddress);
+            return this.unifi.integration('POST', `/sites/${siteId}/devices/${deviceId}/actions`, {action: 'RESTART'});
+        }
+        return this.unifi.restartDevice(macAddress);
+    }
+
+    /** List the site's WLANs (SSIDs). */
+    async getWlans() {
+        const wlans = await this.unifi.getWLanSettings();
+        return Array.isArray(wlans) ? wlans : [];
+    }
+
+    /**
+     * Enable or disable a WLAN. Uses the classic wlanconf endpoint because the
+     * integration API only supports full-object PUTs that require the passphrase.
+     */
+    async setWlanEnabled(wlanId, enabled) {
+        return this.unifi.setWLanSettingsBase(wlanId, {enabled: enabled === true});
     }
 
     getDeviceName(payload) {
@@ -254,11 +189,10 @@ class ApiClient extends BaseClass {
         return deviceName;
     }
 
+    /** Find a known client (online or offline) by MAC. Resolves to the record or null. */
     async getDeviceByMac(macAddress) {
-        const users = await this.unifi.getAllUsers();
-        return users.filter(obj => {
-            return obj.mac === macAddress;
-        });
+        const users = await this.unifi.getClientDevice(macAddress);
+        return (users || []).find(obj => obj.mac === macAddress) || null;
     }
 
     /**
@@ -268,24 +202,17 @@ class ApiClient extends BaseClass {
      * @returns {Promise<object|null>}
      */
     async getAccessPointStats(mac) {
-        return new Promise((resolve, reject) => {
-            this.unifi.getAccessDevices(mac)
-                .then(response => {
-                    const ap = response.find(obj => obj.mac === mac);
-                    if (!ap) return resolve(null);
-                    // Extract the flat per-radio stats fields (ng-*, na-*, 6e-*)
-                    const stats = {};
-                    const radioPrefixes = ['ng', 'na', '6e'];
-                    for (const prefix of radioPrefixes) {
-                        for (const field of ['rx_bytes', 'tx_bytes', 'rx_packets', 'tx_packets']) {
-                            const key = `${prefix}-${field}`;
-                            if (typeof ap[key] === 'number') stats[key] = ap[key];
-                        }
-                    }
-                    resolve(stats);
-                })
-                .catch(error => reject(error));
-        });
+        const response = await this.unifi.getAccessDevices(mac);
+        const ap = (response || []).find(obj => obj.mac === mac);
+        if (!ap) return null;
+        const stats = {};
+        for (const prefix of ['ng', 'na', '6e']) {
+            for (const field of ['rx_bytes', 'tx_bytes', 'rx_packets', 'tx_packets']) {
+                const key = `${prefix}-${field}`;
+                if (typeof ap[key] === 'number') stats[key] = ap[key];
+            }
+        }
+        return stats;
     }
 }
 

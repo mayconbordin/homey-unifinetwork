@@ -22,7 +22,7 @@
 
     <!-- Instruction -->
     <p data-i18n="settings.instruction"></p>
-    <p>Please read the setup guide first and create a dedicated local admin user for UniFi Network.</p>
+    <p>Recommended: create an API key in UniFi Network → Settings → Control Plane → Integrations and paste it below. A local admin username/password is only needed for real-time (WebSocket) events or for controllers without API key support.</p>
 
     <p><span data-i18n="settings.status">Status</span>: <span id="unifi_status" style="font-weight: bold;">Unknown</span>
     </p>
@@ -233,6 +233,8 @@
                 'port': txtNvrPort.value,
                 'user': txtUsername.value,
                 'pass': txtPassword.value,
+                'sslverify': txtSslVerify.checked,
+                'apiKey': txtApiKey.value.trim() || null,
                 'site': txtSite.value,
                 'interval': txtInterval.value,
                 'applicationFlows': (txtApplicationFlows.checked ? "1" : "0"),
@@ -245,7 +247,7 @@
                     if (response.status === 'success') {
                         Homey.alert(Homey.__('settings.test_status.success'), 'info');
                     } else {
-                        Homey.alert(Homey.__('settings.test_status.failure'), 'error');
+                        Homey.alert(Homey.__('settings.test_status.failure') + (response.error ? `\n${response.error}` : ''), 'error');
                     }
                 }
             });

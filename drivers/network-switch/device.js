@@ -120,18 +120,8 @@ class NetworkSwitchDevice extends PoePowerMixin(Device) {
     }
 
     onIsConnected(isConnected) {
-        let deviceState = this.getState();
-
-        if (this.hasCapability('connected')) {
+        if (this.hasCapability('connected') && this.getCapabilityValue('connected') !== isConnected) {
             this.setCapabilityValue('connected', isConnected).catch(this.error);
-        }
-
-        if (deviceState.connected !== isConnected) {
-            if (isConnected) {
-                this.homey.app._cableClientConnected.trigger(this, {}, {}).catch(this.homey.app.debug);
-            } else {
-                this.homey.app._cableClientDisconnected.trigger(this, {}, {}).catch(this.homey.app.debug);
-            }
         }
     }
 
@@ -160,6 +150,10 @@ class NetworkSwitchDevice extends PoePowerMixin(Device) {
     }
 
     onStatusChange(data) {
+        if (typeof data.state === 'number') {
+            this.onIsConnected(data.state === 1);
+        }
+
         if (typeof data.port_table !== 'undefined') {
 
             this.onAmountPortsChange(data.port_table.length);
@@ -185,6 +179,9 @@ class NetworkSwitchDevice extends PoePowerMixin(Device) {
 
                 if (typeof networkSwitch[0].ip !== 'undefined') {
                     this.onIPChange(networkSwitch[0]);
+                }
+                if (typeof networkSwitch[0].state === 'number') {
+                    this.onIsConnected(networkSwitch[0].state === 1);
                 }
 
                 if (typeof networkSwitch[0].port_table !== 'undefined') {

@@ -27,6 +27,7 @@ jest.mock('node-unifi', () => ({
         blockClient: jest.fn().mockResolvedValue(true),
         unblockClient: jest.fn().mockResolvedValue(true),
         setDeviceSettingsBase: jest.fn().mockResolvedValue(true),
+        powerCycleSwitchPort: jest.fn().mockResolvedValue(true),
         getAllUsers: jest.fn().mockResolvedValue([
             { mac: 'aa:bb:cc:dd:ee:ff', name: 'MyPhone', is_guest: false },
         ]),
@@ -114,19 +115,57 @@ describe('ApiClient', () => {
     });
 
     describe('powerCycleDevice()', () => {
-        it('calls setDeviceSettingsBase twice for the target port', async () => {
-            const mac = 'dd:ee:ff:00:11:22';
+        it('uses the power-cycle command in username/password mode', async () => {
+            await client.powerCycleDevice('aa:bb:cc:11:22:33', '3');
+            expect(client.unifi.powerCycleSwitchPort).toHaveBeenCalledWith('aa:bb:cc:11:22:33', 3);
+        });
+
+        it('uses the integration POWER_CYCLE action in API-key mode', async () => {
+            client.setUnifiObject('192.168.1.1', 443, '', '', 'default', false, 'test-key');
+            client.unifi.getIntegrationDeviceId = jest.fn().mockResolvedValue({ siteId: 'site-uuid', deviceId: 'dev-uuid' });
+            client.unifi.integration = jest.fn().mockResolvedValue({});
+            await client.powerCycleDevice('aa:bb:cc:11:22:33', 3);
+            expect(client.unifi.integration).toHaveBeenCalledWith(
+                'POST', '/sites/site-uuid/devices/dev-uuid/interfaces/ports/3/actions', { action: 'POWER_CYCLE' });
+        });
+    });
+
+    describe('powerOffDevice() / powerOnDevice()', () => {
+        const mac = 'aa:bb:cc:11:22:33';
+
+        it('updates an existing port override', async () => {
             client.unifi.getAccessDevices.mockResolvedValueOnce([
-                { mac, _id: 'device-id-1', type: 'usw', adopted: true, name: 'Switch', port_overrides: [{ port_idx: 1, poe_mode: 'auto' }] },
+                { mac, _id: 'sw-1', port_overrides: [{ port_idx: 2, poe_mode: 'auto', name: 'Cam' }] },
             ]);
-            await client.powerCycleDevice(mac, 1);
-            // Allow the internal async chain (incl. 500 ms sleep) to complete
-            await new Promise((r) => setTimeout(r, 600));
-            // Should have called setDeviceSettingsBase exactly twice (off → auto)
-            expect(client.unifi.setDeviceSettingsBase).toHaveBeenCalledTimes(2);
-            // Both calls target the same device id
-            expect(client.unifi.setDeviceSettingsBase.mock.calls[0][0]).toBe('device-id-1');
-            expect(client.unifi.setDeviceSettingsBase.mock.calls[1][0]).toBe('device-id-1');
+            await client.powerOffDevice(mac, '2');
+            expect(client.unifi.setDeviceSettingsBase).toHaveBeenCalledWith('sw-1', {
+                port_overrides: [{ port_idx: 2, poe_mode: 'off', name: 'Cam' }],
+            });
+        });
+
+        it('adds an override when the port has none (UniFi only lists customised ports)', async () => {
+            client.unifi.getAccessDevices.mockResolvedValueOnce([{ mac, _id: 'sw-1', port_overrides: [] }]);
+            await client.powerOnDevice(mac, 5);
+            expect(client.unifi.setDeviceSettingsBase).toHaveBeenCalledWith('sw-1', {
+                port_overrides: [{ port_idx: 5, poe_mode: 'auto' }],
+            });
+        });
+
+        it('rejects when the switch is not found', async () => {
+            client.unifi.getAccessDevices.mockResolvedValueOnce([]);
+            await expect(client.powerOffDevice(mac, 1)).rejects.toThrow('not found');
+        });
+    });
+
+    describe('API-key mode', () => {
+        it('creates an API-key controller when a key is given', () => {
+            client.setUnifiObject('192.168.1.1', 443, '', '', 'default', false, 'test-key');
+            expect(client.usesApiKey()).toBe(true);
+        });
+
+        it('has no WebSocket session without username/password', async () => {
+            client.setUnifiObject('192.168.1.1', 443, '', '', 'default', false, 'test-key');
+            await expect(client.getWebsocketSession('192.168.1.1', 443, '', '', 'default', false)).resolves.toBeNull();
         });
     });
 });
