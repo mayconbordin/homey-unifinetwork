@@ -1,20 +1,20 @@
 {
-  "id": "com.ubnt.unifi",
+  "id": "com.mayconbordin.unifinetwork",
   "sdk": 3,
   "brandColor": "#159EDA",
   "name": {
-    "en": "Ubiquiti UniFi Network",
-    "da": "Ubiquiti UniFi Network",
-    "de": "Ubiquiti UniFi Network",
-    "es": "Ubiquiti UniFi Network",
-    "fr": "Ubiquiti UniFi Network",
-    "it": "Ubiquiti UniFi Network",
-    "ko": "Ubiquiti UniFi Network",
-    "nl": "Ubiquiti UniFi Network",
-    "no": "Ubiquiti UniFi Network",
-    "pl": "Ubiquiti UniFi Network",
-    "ru": "Ubiquiti UniFi Network",
-    "sv": "Ubiquiti UniFi Network"
+    "en": "Ubiquiti UniFi Network (API Key)",
+    "da": "Ubiquiti UniFi Network (API Key)",
+    "de": "Ubiquiti UniFi Network (API Key)",
+    "es": "Ubiquiti UniFi Network (API Key)",
+    "fr": "Ubiquiti UniFi Network (API Key)",
+    "it": "Ubiquiti UniFi Network (API Key)",
+    "ko": "Ubiquiti UniFi Network (API Key)",
+    "nl": "Ubiquiti UniFi Network (API Key)",
+    "no": "Ubiquiti UniFi Network (API Key)",
+    "pl": "Ubiquiti UniFi Network (API Key)",
+    "ru": "Ubiquiti UniFi Network (API Key)",
+    "sv": "Ubiquiti UniFi Network (API Key)"
   },
   "description": {
     "en": "Protect your home with presence detection based on (wifi) clients connected to the UniFi Controller",
@@ -33,8 +33,8 @@
   "version": "2.6.4",
   "compatibility": ">=5.0.0",
   "author": {
-    "name": "Stèphan Eizinga",
-    "email": "stephan@monkeysoft.nl"
+    "name": "Maycon Bordin",
+    "email": "mayconbordin@gmail.com"
   },
   "contributors": {
     "developers": [
@@ -44,22 +44,12 @@
       }
     ]
   },
-  "contributing": {
-    "donate": {
-      "paypal": {
-        "username": "steffjenl"
-      }
-    }
-  },
   "category": [
     "security"
   ],
   "bugs": {
-    "url": "https://github.com/steffjenl/com-homey-unifinetwork/issues"
+    "url": "https://github.com/mayconbordin/homey-unifinetwork/issues"
   },
-  "homeyCommunityTopicId": 42967,
-  "support": "https://monkeysoft.nl/homey-integrations-support/",
-  "homepage": "https://monkeysoft.nl/",
   "images": {
     "large": "/assets/images/large.png",
     "small": "/assets/images/small.png"
@@ -88,5 +78,6 @@
       "method": "GET",
       "path": "/getLastWebsocketMessageTime"
     }
-  }
+  },
+  "source": "https://github.com/mayconbordin/homey-unifinetwork"
 }
