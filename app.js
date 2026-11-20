@@ -668,7 +668,8 @@ class UnifiNetwork extends Homey.App {
 
             this.homey.api.realtime(UnifiConstants.REALTIME_STATUS, 'Connecting');
             const apiKey = settings.apiKey ? String(settings.apiKey).trim() : null;
-            this.api.setUnifiObject(settings.host, settings.port, settings.user, settings.pass, settings.site, settings.sslverify === true, apiKey);
+            const site = (settings.site && String(settings.site).trim()) || 'default';
+            this.api.setUnifiObject(settings.host, settings.port, settings.user, settings.pass, site, settings.sslverify === true, apiKey);
             this.debug(`Authentication mode: ${apiKey ? 'API key' : 'username/password'}`);
 
             await (async () => {
@@ -698,7 +699,7 @@ class UnifiNetwork extends Homey.App {
                             disabledReason = 'Disabled (account requires MFA)';
                         } else {
                             try {
-                                session = await this.api.getWebsocketSession(settings.host, settings.port, settings.user, settings.pass, settings.site, settings.sslverify === true);
+                                session = await this.api.getWebsocketSession(settings.host, settings.port, settings.user, settings.pass, site, settings.sslverify === true);
                                 this._wsMfaBlockedFor = null;
                             } catch (error) {
                                 const parsed = ErrorHandler.parseError(error);
@@ -724,7 +725,7 @@ class UnifiNetwork extends Homey.App {
                         }
                         this.websocketDisabledReason = null;
                         // LISTEN for WebSocket events
-                        this.api.setWebSocketObject(settings.host, settings.port, settings.user, settings.pass, settings.site, settings.sslverify === true, session);
+                        this.api.setWebSocketObject(settings.host, settings.port, settings.user, settings.pass, site, settings.sslverify === true, session);
                         this.api.websocket.listen().then((connected) => {
                             if (connected) {
                                 this.debug('WebSocket is connected');

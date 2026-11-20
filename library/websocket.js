@@ -25,7 +25,8 @@ class WebsocketClient extends BaseClass {
         this.opts.port = (typeof (this.opts.port) === 'undefined' ? 8443 : this.opts.port);
         this.opts.username = (typeof (this.opts.username) === 'undefined' ? 'admin' : this.opts.username);
         this.opts.password = (typeof (this.opts.password) === 'undefined' ? 'ubnt' : this.opts.password);
-        this.opts.site = (typeof (this.opts.site) === 'undefined' ? 'default' : this.opts.site);
+        // An empty site (e.g. a blank settings field) must also fall back, or the URL becomes /wss/s//events
+        this.opts.site = this.opts.site ? String(this.opts.site).trim() || 'default' : 'default';
         this.opts.sslverify = (typeof (this.opts.sslverify) === 'undefined' ? false : this.opts.sslverify);
 
         // Fix 3: use this.opts instead of raw options so defaults applied above are respected
@@ -112,6 +113,7 @@ class WebsocketClient extends BaseClass {
                 this._reconnectAttempt = 0; // reset backoff on successful connection
                 this._lastPong = Date.now(); // reset so timeout doesn't fire immediately on reconnect
                 this.homey.app.debug(`WebSocket: open`);
+                this._publishStatus('Connected');
             });
 
             currentWs.on('message', (data, isBinary) => {
@@ -152,6 +154,7 @@ class WebsocketClient extends BaseClass {
                     this.homey.log('[websocket] connection closed');
                 } else {
                     this.homey.log('[websocket] connection closed, reconnecting...');
+                    this._publishStatus('Reconnecting');
                     this._reconnect();
                 }
             });
@@ -191,6 +194,15 @@ class WebsocketClient extends BaseClass {
             this.homey.error(ex instanceof Error ? (ex.stack || ex.message) : JSON.stringify(ex));
             return false;
         }
+    }
+
+    /** Push the connection state to the settings page (if open). */
+    _publishStatus(status) {
+        try {
+            if (this.homey.api && typeof this.homey.api.realtime === 'function') {
+                this.homey.api.realtime('com.ubnt.unifi.websocket.status', status);
+            }
+        } catch (_e) { /* settings page not open */ }
     }
 
     _reconnect() {

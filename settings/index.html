@@ -94,7 +94,7 @@
         <!-- Site -->
         <div class="field row">
             <label class="homey-form-label" for="txt_site" data-i18n="settings.site"></label>
-            <input class="homey-form-input" id="txt_site" type="text" value=""/>
+            <input class="homey-form-input" id="txt_site" type="text" value="default" placeholder="default"/>
         </div>
     </fieldset>
 
@@ -214,7 +214,7 @@
                 'pass': txtPassword.value,
                 'sslverify': txtSslVerify.checked,
                 'apiKey': txtApiKey.value.trim() || null,
-                'site': txtSite.value,
+                'site': txtSite.value.trim() || 'default',
                 'interval': txtInterval.value,
                 'applicationFlows': (txtApplicationFlows.checked ? "1" : "0"),
                 'pullmethode': txtPullMethode.options[txtPullMethode.selectedIndex].value,
@@ -235,7 +235,7 @@
                 'pass': txtPassword.value,
                 'sslverify': txtSslVerify.checked,
                 'apiKey': txtApiKey.value.trim() || null,
-                'site': txtSite.value,
+                'site': txtSite.value.trim() || 'default',
                 'interval': txtInterval.value,
                 'applicationFlows': (txtApplicationFlows.checked ? "1" : "0"),
                 'pullmethode': txtPullMethode.options[txtPullMethode.selectedIndex].value,

@@ -116,4 +116,16 @@ describe('WebsocketClient', () => {
             expect([...HANDLED_MESSAGE_TYPES].sort()).toEqual(['device:sync', 'events']);
         });
     });
+
+    describe('site option', () => {
+        it.each([[undefined], [''], ['   '], [null]])('falls back to "default" for %p', (site) => {
+            const client = new WebsocketClient({ host: '192.168.1.1', port: 443, site }, makeHomeyMock());
+            expect(client.opts.site).toBe('default');
+        });
+
+        it('keeps an explicit site', () => {
+            const client = new WebsocketClient({ host: '192.168.1.1', port: 443, site: 'office' }, makeHomeyMock());
+            expect(client.opts.site).toBe('office');
+        });
+    });
 });
