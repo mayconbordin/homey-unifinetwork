@@ -670,7 +670,7 @@ class UnifiNetwork extends Homey.App {
                     apDriver.getDevices().forEach(device => {
                         const apData = apDevices.find(d => d.mac === device.getData().id);
                         if (apData) {
-                            device.onUpdateMessagePayload(apData);
+                            device.onUpdateMessagePayload(apData, {fromRest: true});
                         } else {
                             device.onIsConnected(false);
                         }

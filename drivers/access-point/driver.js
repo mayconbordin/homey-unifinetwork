@@ -3,6 +3,7 @@
 const {Driver} = require('homey');
 const UnifiConstants = require("../../library/constants");
 const Homey = require("homey");
+const ErrorHandler = require("../../library/error-handler");
 
 class AccessPoint extends Driver {
 
@@ -10,6 +11,21 @@ class AccessPoint extends Driver {
      * onInit is called when the driver is initialized.
      */
     async onInit() {
+        this.firmwareUpdateAvailable = this.homey.flow.getDeviceTriggerCard('access_point_firmware_update_available');
+
+        this.homey.flow.getActionCard('access_point_locate').registerRunListener(async (args) => {
+            try {
+                await this.homey.app.api.setDeviceLocate(args.device.getData().id, args.state === 'on');
+            } catch (error) {
+                const parsed = ErrorHandler.parseError(error);
+                this.homey.app.error(`[access_point_locate] ${parsed.message}`);
+                if (parsed.isAuthError) {
+                    await this.homey.app._appLogin();
+                }
+                throw new Error(parsed.message);
+            }
+        });
+
         this.log('Access-Point has been initialized');
     }
 

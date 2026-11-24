@@ -1,0 +1,86 @@
+{
+  "triggers": [
+    {
+      "id": "access_point_firmware_update_available",
+      "title": {
+        "en": "A firmware update became available",
+        "nl": "Er is een firmware-update beschikbaar",
+        "de": "Ein Firmware-Update ist verfügbar",
+        "pt": "Uma atualização de firmware ficou disponível"
+      },
+      "tokens": [
+        {
+          "name": "current_version",
+          "type": "string",
+          "title": {
+            "en": "Current version",
+            "nl": "Huidige versie",
+            "de": "Aktuelle Version",
+            "pt": "Versão atual"
+          },
+          "example": "7.5.15"
+        },
+        {
+          "name": "new_version",
+          "type": "string",
+          "title": {
+            "en": "New version",
+            "nl": "Nieuwe versie",
+            "de": "Neue Version",
+            "pt": "Nova versão"
+          },
+          "example": "7.6.11"
+        }
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "id": "access_point_locate",
+      "title": {
+        "en": "Locate LED on/off",
+        "nl": "Locatie-LED aan/uit",
+        "de": "Lokalisierungs-LED an/aus",
+        "pt": "LED de localização liga/desliga"
+      },
+      "titleFormatted": {
+        "en": "[[state]] blinking the locate LED",
+        "nl": "[[state]] knipperen van de locatie-LED",
+        "de": "Blinken der Lokalisierungs-LED [[state]]",
+        "pt": "[[state]] o piscar do LED de localização"
+      },
+      "args": [
+        {
+          "type": "dropdown",
+          "name": "state",
+          "title": {
+            "en": "State",
+            "nl": "Status",
+            "de": "Status",
+            "pt": "Estado"
+          },
+          "values": [
+            {
+              "id": "on",
+              "label": {
+                "en": "Start",
+                "nl": "Start",
+                "de": "Starten",
+                "pt": "Iniciar"
+              }
+            },
+            {
+              "id": "off",
+              "label": {
+                "en": "Stop",
+                "nl": "Stop",
+                "de": "Stoppen",
+                "pt": "Parar"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

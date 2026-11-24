@@ -1755,6 +1755,46 @@
         ]
       },
       {
+        "id": "access_point_firmware_update_available",
+        "title": {
+          "en": "A firmware update became available",
+          "nl": "Er is een firmware-update beschikbaar",
+          "de": "Ein Firmware-Update ist verfügbar",
+          "pt": "Uma atualização de firmware ficou disponível"
+        },
+        "tokens": [
+          {
+            "name": "current_version",
+            "type": "string",
+            "title": {
+              "en": "Current version",
+              "nl": "Huidige versie",
+              "de": "Aktuelle Version",
+              "pt": "Versão atual"
+            },
+            "example": "7.5.15"
+          },
+          {
+            "name": "new_version",
+            "type": "string",
+            "title": {
+              "en": "New version",
+              "nl": "Nieuwe versie",
+              "de": "Neue Version",
+              "pt": "Nova versão"
+            },
+            "example": "7.6.11"
+          }
+        ],
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=access-point"
+          }
+        ]
+      },
+      {
         "id": "network_switch_port_link_up",
         "title": {
           "en": "A port link went up",
@@ -3259,6 +3299,58 @@
               "pt": "Cliente Wi-Fi",
               "pl": "Wi-Fi client"
             }
+          }
+        ]
+      },
+      {
+        "id": "access_point_locate",
+        "title": {
+          "en": "Locate LED on/off",
+          "nl": "Locatie-LED aan/uit",
+          "de": "Lokalisierungs-LED an/aus",
+          "pt": "LED de localização liga/desliga"
+        },
+        "titleFormatted": {
+          "en": "[[state]] blinking the locate LED",
+          "nl": "[[state]] knipperen van de locatie-LED",
+          "de": "Blinken der Lokalisierungs-LED [[state]]",
+          "pt": "[[state]] o piscar do LED de localização"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=access-point"
+          },
+          {
+            "type": "dropdown",
+            "name": "state",
+            "title": {
+              "en": "State",
+              "nl": "Status",
+              "de": "Status",
+              "pt": "Estado"
+            },
+            "values": [
+              {
+                "id": "on",
+                "label": {
+                  "en": "Start",
+                  "nl": "Start",
+                  "de": "Starten",
+                  "pt": "Iniciar"
+                }
+              },
+              {
+                "id": "off",
+                "label": {
+                  "en": "Stop",
+                  "nl": "Stop",
+                  "de": "Stoppen",
+                  "pt": "Parar"
+                }
+              }
+            ]
           }
         ]
       },
@@ -5569,6 +5661,26 @@
       "setable": false,
       "icon": "./assets/ipaddress.svg"
     },
+    "measure_channel_utilization": {
+      "type": "number",
+      "title": {
+        "en": "Channel utilization",
+        "nl": "Kanaalbezetting",
+        "de": "Kanalauslastung",
+        "pt": "Utilização do canal"
+      },
+      "units": {
+        "en": "%"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "insights": true,
+      "min": 0,
+      "max": 100,
+      "decimals": 0,
+      "icon": "./assets/signal.svg"
+    },
     "measure_connected_clients": {
       "type": "number",
       "title": {
@@ -6114,6 +6226,26 @@
       "min": 0,
       "decimals": 2,
       "icon": "./assets/traffic.svg"
+    },
+    "measure_wifi_experience": {
+      "type": "number",
+      "title": {
+        "en": "Wi-Fi experience",
+        "nl": "Wifi-ervaring",
+        "de": "WLAN-Erlebnis",
+        "pt": "Experiência Wi-Fi"
+      },
+      "units": {
+        "en": "%"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "insights": true,
+      "min": 0,
+      "max": 100,
+      "decimals": 0,
+      "icon": "./assets/rssi.svg"
     },
     "poe": {
       "type": "boolean",

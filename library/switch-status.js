@@ -99,4 +99,4 @@ function parseFirmware(device) {
     };
 }
 
-module.exports = {parseSwitchStatus, parseFirmware, toMbps};
+module.exports = {parseSwitchStatus, parseFirmware, toMbps, toNumber};

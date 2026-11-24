@@ -1,0 +1,20 @@
+{
+  "type": "number",
+  "title": {
+    "en": "Wi-Fi experience",
+    "nl": "Wifi-ervaring",
+    "de": "WLAN-Erlebnis",
+    "pt": "Experiência Wi-Fi"
+  },
+  "units": {
+    "en": "%"
+  },
+  "getable": true,
+  "setable": false,
+  "uiComponent": "sensor",
+  "insights": true,
+  "min": 0,
+  "max": 100,
+  "decimals": 0,
+  "icon": "./assets/rssi.svg"
+}
