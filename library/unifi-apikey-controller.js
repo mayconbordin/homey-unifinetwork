@@ -191,6 +191,11 @@ class UnifiApiKeyController {
         return this._legacy('POST', '/api/s/<SITE>/cmd/stamgr', {cmd: 'unblock-sta', mac: mac.toLowerCase()});
     }
 
+    /** Blink (or stop blinking) the LED of an adopted device. Works for switches too. */
+    setLocateAccessPoint(mac, enable) {
+        return this._legacy('POST', '/api/s/<SITE>/cmd/devmgr', {cmd: enable === true ? 'set-locate' : 'unset-locate', mac: mac.toLowerCase()});
+    }
+
     setDeviceSettingsBase(deviceId, payload) {
         return this._legacy('PUT', `/api/s/<SITE>/rest/device/${deviceId.trim()}`, payload);
     }

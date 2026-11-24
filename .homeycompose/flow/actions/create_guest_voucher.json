@@ -1,0 +1,90 @@
+{
+  "id": "create_guest_voucher",
+  "title": {
+    "en": "Create a guest Wi-Fi voucher",
+    "nl": "Gastvoucher voor wifi maken",
+    "de": "Gast-WLAN-Gutschein erstellen",
+    "pt": "Criar voucher de Wi-Fi para convidados"
+  },
+  "titleFormatted": {
+    "en": "Create voucher [[name]] valid for [[minutes]] minutes for [[guests]] guest(s)",
+    "nl": "Maak voucher [[name]] geldig voor [[minutes]] minuten voor [[guests]] gast(en)",
+    "de": "Gutschein [[name]] für [[minutes]] Minuten für [[guests]] Gast/Gäste erstellen",
+    "pt": "Criar voucher [[name]] válido por [[minutes]] minutos para [[guests]] convidado(s)"
+  },
+  "hint": {
+    "en": "Requires a hotspot (guest portal) with voucher authentication and an API key in the app settings. The code is available as a tag.",
+    "nl": "Vereist een hotspot met voucher-authenticatie en een API-sleutel. De code is beschikbaar als tag.",
+    "de": "Erfordert einen Hotspot mit Gutschein-Authentifizierung und einen API-Schlüssel. Der Code ist als Tag verfügbar.",
+    "pt": "Requer um hotspot com autenticação por voucher e uma chave de API. O código fica disponível como tag."
+  },
+  "args": [
+    {
+      "type": "text",
+      "name": "name",
+      "title": {
+        "en": "Name",
+        "nl": "Naam",
+        "de": "Name",
+        "pt": "Nome"
+      },
+      "placeholder": {
+        "en": "Guests",
+        "nl": "Gasten",
+        "de": "Gäste",
+        "pt": "Convidados"
+      }
+    },
+    {
+      "type": "number",
+      "name": "minutes",
+      "min": 1,
+      "max": 1000000,
+      "step": 1,
+      "title": {
+        "en": "Valid for (minutes)",
+        "nl": "Geldig (minuten)",
+        "de": "Gültig (Minuten)",
+        "pt": "Válido por (minutos)"
+      },
+      "placeholder": {
+        "en": "1440",
+        "nl": "1440",
+        "de": "1440",
+        "pt": "1440"
+      }
+    },
+    {
+      "type": "number",
+      "name": "guests",
+      "min": 1,
+      "max": 1000,
+      "step": 1,
+      "title": {
+        "en": "Number of guests",
+        "nl": "Aantal gasten",
+        "de": "Anzahl Gäste",
+        "pt": "Número de convidados"
+      },
+      "placeholder": {
+        "en": "1",
+        "nl": "1",
+        "de": "1",
+        "pt": "1"
+      }
+    }
+  ],
+  "tokens": [
+    {
+      "name": "voucher_code",
+      "type": "string",
+      "title": {
+        "en": "Voucher code",
+        "nl": "Vouchercode",
+        "de": "Gutscheincode",
+        "pt": "Código do voucher"
+      },
+      "example": "94722-88777"
+    }
+  ]
+}

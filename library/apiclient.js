@@ -155,15 +155,71 @@ class ApiClient extends BaseClass {
     }
 
     /**
-     * Restart (reboot) an adopted device (e.g. an access point).
+     * Restart (reboot) an adopted device (access point, switch, ...).
      * @param {string} macAddress
      */
-    async restartAccessPoint(macAddress) {
+    async restartDevice(macAddress) {
         if (this.usesApiKey()) {
             const {siteId, deviceId} = await this.unifi.getIntegrationDeviceId(macAddress);
             return this.unifi.integration('POST', `/sites/${siteId}/devices/${deviceId}/actions`, {action: 'RESTART'});
         }
         return this.unifi.restartDevice(macAddress);
+    }
+
+    async restartAccessPoint(macAddress) {
+        return this.restartDevice(macAddress);
+    }
+
+    /** Start or stop blinking the locate LED of an adopted device. */
+    async setDeviceLocate(macAddress, enabled) {
+        return this.unifi.setLocateAccessPoint(macAddress, enabled === true);
+    }
+
+    _requireApiKey(feature) {
+        if (!this.usesApiKey()) {
+            throw new Error(`${feature} requires an API key in the app settings`);
+        }
+    }
+
+    /** User-defined firewall policies (system policies cannot be changed). */
+    async getFirewallPolicies() {
+        this._requireApiKey('Firewall policies');
+        const siteId = await this.unifi.getIntegrationSiteId();
+        const policies = await this.unifi.integrationList(`/sites/${siteId}/firewall/policies`);
+        return policies.filter(p => p.metadata && p.metadata.origin === 'USER_DEFINED');
+    }
+
+    /**
+     * Enable or disable a firewall policy. The integration API's PATCH only
+     * covers logging, so this reads the policy and PUTs it back with `enabled` changed.
+     */
+    async setFirewallPolicyEnabled(policyId, enabled) {
+        this._requireApiKey('Firewall policies');
+        const siteId = await this.unifi.getIntegrationSiteId();
+        const path = `/sites/${siteId}/firewall/policies/${policyId}`;
+        const policy = await this.unifi.integration('GET', path);
+        // The PUT body is the policy without its read-only fields
+        const body = {...policy, enabled: enabled === true};
+        delete body.id;
+        delete body.index;
+        delete body.metadata;
+        return this.unifi.integration('PUT', path, body);
+    }
+
+    /**
+     * Generate a hotspot guest voucher.
+     * @returns {Promise<object>} the created voucher ({id, code, name, timeLimitMinutes, ...})
+     */
+    async createVoucher({name, timeLimitMinutes, authorizedGuestLimit, dataUsageLimitMBytes}) {
+        this._requireApiKey('Guest vouchers');
+        const siteId = await this.unifi.getIntegrationSiteId();
+        const body = {name, timeLimitMinutes, count: 1};
+        if (authorizedGuestLimit) body.authorizedGuestLimit = authorizedGuestLimit;
+        if (dataUsageLimitMBytes) body.dataUsageLimitMBytes = dataUsageLimitMBytes;
+        const res = await this.unifi.integration('POST', `/sites/${siteId}/hotspot/vouchers`, body);
+        const voucher = res && Array.isArray(res.vouchers) ? res.vouchers[0] : null;
+        if (!voucher) throw new Error('Controller did not return a voucher');
+        return voucher;
     }
 
     /** List the site's WLANs (SSIDs). */

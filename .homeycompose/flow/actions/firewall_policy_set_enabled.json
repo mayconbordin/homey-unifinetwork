@@ -1,0 +1,69 @@
+{
+  "id": "firewall_policy_set_enabled",
+  "title": {
+    "en": "Enable or disable a firewall policy",
+    "nl": "Firewallregel in- of uitschakelen",
+    "de": "Firewall-Regel aktivieren oder deaktivieren",
+    "pt": "Ativar ou desativar uma regra de firewall"
+  },
+  "titleFormatted": {
+    "en": "[[enabled]] firewall policy [[policy]]",
+    "nl": "Firewallregel [[policy]] [[enabled]]",
+    "de": "Firewall-Regel [[policy]] [[enabled]]",
+    "pt": "[[enabled]] regra de firewall [[policy]]"
+  },
+  "hint": {
+    "en": "Lists your own (user-defined) firewall policies. Requires an API key in the app settings.",
+    "nl": "Toont je eigen firewallregels. Vereist een API-sleutel in de app-instellingen.",
+    "de": "Zeigt Ihre eigenen Firewall-Regeln. Erfordert einen API-Schlüssel in den App-Einstellungen.",
+    "pt": "Lista suas próprias regras de firewall. Requer uma chave de API nas configurações do app."
+  },
+  "args": [
+    {
+      "type": "autocomplete",
+      "name": "policy",
+      "title": {
+        "en": "Policy",
+        "nl": "Regel",
+        "de": "Regel",
+        "pt": "Regra"
+      },
+      "placeholder": {
+        "en": "Policy name",
+        "nl": "Naam van regel",
+        "de": "Regelname",
+        "pt": "Nome da regra"
+      }
+    },
+    {
+      "type": "dropdown",
+      "name": "enabled",
+      "title": {
+        "en": "State",
+        "nl": "Status",
+        "de": "Status",
+        "pt": "Estado"
+      },
+      "values": [
+        {
+          "id": "true",
+          "label": {
+            "en": "Enable",
+            "nl": "Inschakelen",
+            "de": "Aktivieren",
+            "pt": "Ativar"
+          }
+        },
+        {
+          "id": "false",
+          "label": {
+            "en": "Disable",
+            "nl": "Uitschakelen",
+            "de": "Deaktivieren",
+            "pt": "Desativar"
+          }
+        }
+      ]
+    }
+  ]
+}

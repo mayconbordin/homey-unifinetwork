@@ -1,0 +1,14 @@
+{
+  "type": "boolean",
+  "title": {
+    "en": "Firmware update available",
+    "nl": "Firmware-update beschikbaar",
+    "de": "Firmware-Update verfügbar",
+    "pt": "Atualização de firmware disponível"
+  },
+  "getable": true,
+  "setable": false,
+  "uiComponent": "sensor",
+  "insights": false,
+  "icon": "./assets/cpu.svg"
+}

@@ -1,0 +1,436 @@
+{
+  "triggers": [
+    {
+      "id": "network_switch_port_link_up",
+      "title": {
+        "en": "A port link went up",
+        "nl": "Een poortverbinding kwam op",
+        "de": "Ein Port-Link ist aktiv geworden",
+        "pt": "O link de uma porta ficou ativo"
+      },
+      "titleFormatted": {
+        "en": "[[port]] link went up",
+        "nl": "[[port]] verbinding kwam op",
+        "de": "[[port]] Link ist aktiv geworden",
+        "pt": "Link da [[port]] ficou ativo"
+      },
+      "args": [
+        {
+          "type": "autocomplete",
+          "name": "port",
+          "title": {
+            "en": "Port",
+            "nl": "Poort",
+            "de": "Port",
+            "pt": "Porta"
+          },
+          "placeholder": {
+            "en": "Port",
+            "nl": "Poort",
+            "de": "Port",
+            "pt": "Porta"
+          }
+        }
+      ],
+      "tokens": [
+        {
+          "name": "port_number",
+          "type": "number",
+          "title": {
+            "en": "Port number",
+            "nl": "Poortnummer",
+            "de": "Portnummer",
+            "pt": "Número da porta"
+          },
+          "example": 3
+        },
+        {
+          "name": "port_name",
+          "type": "string",
+          "title": {
+            "en": "Port name",
+            "nl": "Poortnaam",
+            "de": "Portname",
+            "pt": "Nome da porta"
+          },
+          "example": "Port 3"
+        },
+        {
+          "name": "speed",
+          "type": "number",
+          "title": {
+            "en": "Speed (Mbit/s)",
+            "nl": "Snelheid (Mbit/s)",
+            "de": "Geschwindigkeit (Mbit/s)",
+            "pt": "Velocidade (Mbit/s)"
+          },
+          "example": 1000
+        },
+        {
+          "name": "connected_mac",
+          "type": "string",
+          "title": {
+            "en": "Connected device MAC",
+            "nl": "MAC van verbonden apparaat",
+            "de": "MAC des verbundenen Geräts",
+            "pt": "MAC do dispositivo conectado"
+          },
+          "example": "aa:bb:cc:dd:ee:ff"
+        },
+        {
+          "name": "connected_ip",
+          "type": "string",
+          "title": {
+            "en": "Connected device IP",
+            "nl": "IP van verbonden apparaat",
+            "de": "IP des verbundenen Geräts",
+            "pt": "IP do dispositivo conectado"
+          },
+          "example": "192.168.1.20"
+        }
+      ]
+    },
+    {
+      "id": "network_switch_port_link_down",
+      "title": {
+        "en": "A port link went down",
+        "nl": "Een poortverbinding viel weg",
+        "de": "Ein Port-Link ist ausgefallen",
+        "pt": "O link de uma porta caiu"
+      },
+      "titleFormatted": {
+        "en": "[[port]] link went down",
+        "nl": "[[port]] verbinding viel weg",
+        "de": "[[port]] Link ist ausgefallen",
+        "pt": "Link da [[port]] caiu"
+      },
+      "args": [
+        {
+          "type": "autocomplete",
+          "name": "port",
+          "title": {
+            "en": "Port",
+            "nl": "Poort",
+            "de": "Port",
+            "pt": "Porta"
+          },
+          "placeholder": {
+            "en": "Port",
+            "nl": "Poort",
+            "de": "Port",
+            "pt": "Porta"
+          }
+        }
+      ],
+      "tokens": [
+        {
+          "name": "port_number",
+          "type": "number",
+          "title": {
+            "en": "Port number",
+            "nl": "Poortnummer",
+            "de": "Portnummer",
+            "pt": "Número da porta"
+          },
+          "example": 3
+        },
+        {
+          "name": "port_name",
+          "type": "string",
+          "title": {
+            "en": "Port name",
+            "nl": "Poortnaam",
+            "de": "Portname",
+            "pt": "Nome da porta"
+          },
+          "example": "Port 3"
+        },
+        {
+          "name": "connected_mac",
+          "type": "string",
+          "title": {
+            "en": "Connected device MAC",
+            "nl": "MAC van verbonden apparaat",
+            "de": "MAC des verbundenen Geräts",
+            "pt": "MAC do dispositivo conectado"
+          },
+          "example": "aa:bb:cc:dd:ee:ff"
+        },
+        {
+          "name": "connected_ip",
+          "type": "string",
+          "title": {
+            "en": "Connected device IP",
+            "nl": "IP van verbonden apparaat",
+            "de": "IP des verbundenen Geräts",
+            "pt": "IP do dispositivo conectado"
+          },
+          "example": "192.168.1.20"
+        }
+      ]
+    },
+    {
+      "id": "network_switch_port_speed_changed",
+      "title": {
+        "en": "A port's link speed changed",
+        "nl": "Snelheid van een poort veranderde",
+        "de": "Port-Geschwindigkeit hat sich geändert",
+        "pt": "A velocidade de uma porta mudou"
+      },
+      "titleFormatted": {
+        "en": "[[port]] link speed changed",
+        "nl": "Snelheid van [[port]] veranderde",
+        "de": "Geschwindigkeit von [[port]] hat sich geändert",
+        "pt": "A velocidade da [[port]] mudou"
+      },
+      "args": [
+        {
+          "type": "autocomplete",
+          "name": "port",
+          "title": {
+            "en": "Port",
+            "nl": "Poort",
+            "de": "Port",
+            "pt": "Porta"
+          },
+          "placeholder": {
+            "en": "Port",
+            "nl": "Poort",
+            "de": "Port",
+            "pt": "Porta"
+          }
+        }
+      ],
+      "tokens": [
+        {
+          "name": "port_number",
+          "type": "number",
+          "title": {
+            "en": "Port number",
+            "nl": "Poortnummer",
+            "de": "Portnummer",
+            "pt": "Número da porta"
+          },
+          "example": 3
+        },
+        {
+          "name": "port_name",
+          "type": "string",
+          "title": {
+            "en": "Port name",
+            "nl": "Poortnaam",
+            "de": "Portname",
+            "pt": "Nome da porta"
+          },
+          "example": "Port 3"
+        },
+        {
+          "name": "speed",
+          "type": "number",
+          "title": {
+            "en": "Speed (Mbit/s)",
+            "nl": "Snelheid (Mbit/s)",
+            "de": "Geschwindigkeit (Mbit/s)",
+            "pt": "Velocidade (Mbit/s)"
+          },
+          "example": 1000
+        },
+        {
+          "name": "previous_speed",
+          "type": "number",
+          "title": {
+            "en": "Previous speed (Mbit/s)",
+            "nl": "Vorige snelheid (Mbit/s)",
+            "de": "Vorherige Geschwindigkeit (Mbit/s)",
+            "pt": "Velocidade anterior (Mbit/s)"
+          },
+          "example": 10000
+        }
+      ]
+    },
+    {
+      "id": "network_switch_firmware_update_available",
+      "title": {
+        "en": "A firmware update became available",
+        "nl": "Er is een firmware-update beschikbaar",
+        "de": "Ein Firmware-Update ist verfügbar",
+        "pt": "Uma atualização de firmware ficou disponível"
+      },
+      "tokens": [
+        {
+          "name": "current_version",
+          "type": "string",
+          "title": {
+            "en": "Current version",
+            "nl": "Huidige versie",
+            "de": "Aktuelle Version",
+            "pt": "Versão atual"
+          },
+          "example": "7.5.15"
+        },
+        {
+          "name": "new_version",
+          "type": "string",
+          "title": {
+            "en": "New version",
+            "nl": "Nieuwe versie",
+            "de": "Neue Version",
+            "pt": "Nova versão"
+          },
+          "example": "7.6.11"
+        }
+      ]
+    }
+  ],
+  "conditions": [
+    {
+      "id": "network_switch_port_is_up",
+      "title": {
+        "en": "Port link is !{{up|down}}",
+        "nl": "Poortverbinding is !{{actief|inactief}}",
+        "de": "Port-Link ist !{{aktiv|inaktiv}}",
+        "pt": "Link da porta está !{{ativo|inativo}}"
+      },
+      "titleFormatted": {
+        "en": "[[port]] link is !{{up|down}}",
+        "nl": "[[port]] verbinding is !{{actief|inactief}}",
+        "de": "[[port]] Link ist !{{aktiv|inaktiv}}",
+        "pt": "Link da [[port]] está !{{ativo|inativo}}"
+      },
+      "args": [
+        {
+          "type": "autocomplete",
+          "name": "port",
+          "title": {
+            "en": "Port",
+            "nl": "Poort",
+            "de": "Port",
+            "pt": "Porta"
+          },
+          "placeholder": {
+            "en": "Port",
+            "nl": "Poort",
+            "de": "Port",
+            "pt": "Porta"
+          }
+        }
+      ]
+    },
+    {
+      "id": "network_switch_port_poe_above",
+      "title": {
+        "en": "PoE power on a port is !{{above|not above}}",
+        "nl": "PoE-vermogen op poort is !{{boven|niet boven}}",
+        "de": "PoE-Leistung am Port ist !{{über|nicht über}}",
+        "pt": "Potência PoE na porta !{{está acima|não está acima}}"
+      },
+      "titleFormatted": {
+        "en": "PoE power on [[port]] is !{{above|not above}} [[watts]] W",
+        "nl": "PoE-vermogen op [[port]] is !{{boven|niet boven}} [[watts]] W",
+        "de": "PoE-Leistung an [[port]] ist !{{über|nicht über}} [[watts]] W",
+        "pt": "Potência PoE na [[port]] !{{está acima|não está acima}} de [[watts]] W"
+      },
+      "args": [
+        {
+          "type": "autocomplete",
+          "name": "port",
+          "title": {
+            "en": "Port",
+            "nl": "Poort",
+            "de": "Port",
+            "pt": "Porta"
+          },
+          "placeholder": {
+            "en": "Port",
+            "nl": "Poort",
+            "de": "Port",
+            "pt": "Porta"
+          }
+        },
+        {
+          "type": "number",
+          "name": "watts",
+          "min": 0,
+          "max": 100,
+          "step": 0.1,
+          "title": {
+            "en": "Watts",
+            "nl": "Watt",
+            "de": "Watt",
+            "pt": "Watts"
+          },
+          "placeholder": {
+            "en": "5",
+            "nl": "5",
+            "de": "5",
+            "pt": "5"
+          }
+        }
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "id": "network_switch_restart",
+      "title": {
+        "en": "Restart switch",
+        "nl": "Switch herstarten",
+        "de": "Switch neu starten",
+        "pt": "Reiniciar switch"
+      },
+      "hint": {
+        "en": "Reboots the switch. Everything connected to it loses network and PoE power for a few minutes.",
+        "nl": "Herstart de switch. Alles wat erop is aangesloten verliest enkele minuten netwerk en PoE-stroom.",
+        "de": "Startet den Switch neu. Alle angeschlossenen Geräte verlieren für einige Minuten Netzwerk und PoE-Strom.",
+        "pt": "Reinicia o switch. Tudo conectado a ele perde rede e energia PoE por alguns minutos."
+      }
+    },
+    {
+      "id": "network_switch_locate",
+      "title": {
+        "en": "Locate LED on/off",
+        "nl": "Locatie-LED aan/uit",
+        "de": "Lokalisierungs-LED an/aus",
+        "pt": "LED de localização liga/desliga"
+      },
+      "titleFormatted": {
+        "en": "[[state]] blinking the locate LED",
+        "nl": "[[state]] knipperen van de locatie-LED",
+        "de": "Blinken der Lokalisierungs-LED [[state]]",
+        "pt": "[[state]] o piscar do LED de localização"
+      },
+      "args": [
+        {
+          "type": "dropdown",
+          "name": "state",
+          "title": {
+            "en": "State",
+            "nl": "Status",
+            "de": "Status",
+            "pt": "Estado"
+          },
+          "values": [
+            {
+              "id": "on",
+              "label": {
+                "en": "Start",
+                "nl": "Start",
+                "de": "Starten",
+                "pt": "Iniciar"
+              }
+            },
+            {
+              "id": "off",
+              "label": {
+                "en": "Stop",
+                "nl": "Stop",
+                "de": "Stoppen",
+                "pt": "Parar"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

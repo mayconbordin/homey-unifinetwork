@@ -68,15 +68,35 @@ function parseSwitchStatus(device) {
 
     const ports = portTable
         .filter(p => Number.isInteger(p.port_idx))
-        .map(p => ({
-            idx: p.port_idx,
-            name: p.name || `Port ${p.port_idx}`,
-            up: p.up === true,
-            poeCapable: p.port_poe === true,
-            poeEnabled: p.poe_enable === true,
-        }));
+        .map(p => {
+            const lastConnection = p.last_connection || {};
+            const poePower = toNumber(p.poe_power);
+            return {
+                idx: p.port_idx,
+                name: p.name || `Port ${p.port_idx}`,
+                up: p.up === true,
+                speed: p.up === true ? (toNumber(p.speed) || 0) : 0,
+                poeCapable: p.port_poe === true,
+                poeEnabled: p.poe_enable === true,
+                poePower: poePower === null ? 0 : round(poePower, 2),
+                connectedMac: lastConnection.mac || '',
+                connectedIp: lastConnection.ip || '',
+            };
+        });
 
     return {caps, ports};
 }
 
-module.exports = {parseSwitchStatus, toMbps};
+/**
+ * Firmware status from a classic `stat/device` entry. Only read this from
+ * REST data: `device:sync` messages are not guaranteed to carry the upgrade fields.
+ */
+function parseFirmware(device) {
+    return {
+        version: device.displayable_version || device.version || '',
+        updateAvailable: device.upgradable === true && !!device.upgrade_to_firmware,
+        latestVersion: device.upgrade_to_firmware || '',
+    };
+}
+
+module.exports = {parseSwitchStatus, parseFirmware, toMbps};

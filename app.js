@@ -7,6 +7,12 @@ const {formatForLog} = require('./library/sanitise');
 const ErrorHandler = require('./library/error-handler');
 const DeviceSyncThrottle = require('./library/device-sync-throttle');
 
+/** Show voucher codes the way the UniFi portal does: 12345-67890. */
+function formatVoucherCode(code) {
+    const s = String(code || '');
+    return /^\d{10}$/.test(s) ? `${s.slice(0, 5)}-${s.slice(5)}` : s;
+}
+
 class UnifiNetwork extends Homey.App {
     /**
      * onInit is called when the app is initialized.
@@ -317,6 +323,50 @@ class UnifiNetwork extends Homey.App {
                 throw new Error(parsed.message);
             }
         });
+
+        // Firewall policy enable/disable (integration API, user-defined policies only)
+        const firewallPolicy = this.homey.flow.getActionCard('firewall_policy_set_enabled');
+        firewallPolicy.registerArgumentAutocompleteListener('policy', async (query) => {
+            const policies = await this.api.getFirewallPolicies();
+            const q = (query || '').toLowerCase();
+            return policies
+                .filter(p => (p.name || '').toLowerCase().includes(q))
+                .map(p => ({id: p.id, name: p.name, description: p.enabled ? 'Enabled' : 'Disabled'}));
+        });
+        firewallPolicy.registerRunListener(async (args) => {
+            await this._runFlowAction('firewall_policy_set_enabled', async () => {
+                await this.api.setFirewallPolicyEnabled(args.policy.id, args.enabled === 'true');
+                this.debug(`firewall_policy_set_enabled: ${args.policy.name} enabled=${args.enabled}`);
+            });
+        });
+
+        // Hotspot guest voucher
+        this.homey.flow.getActionCard('create_guest_voucher').registerRunListener(async (args) => {
+            return this._runFlowAction('create_guest_voucher', async () => {
+                const voucher = await this.api.createVoucher({
+                    name: args.name || 'Homey',
+                    timeLimitMinutes: Math.round(args.minutes),
+                    authorizedGuestLimit: Math.round(args.guests),
+                });
+                this.debug(`create_guest_voucher: created ${voucher.id}`);
+                return {voucher_code: formatVoucherCode(voucher.code)};
+            });
+        });
+    }
+
+    /** Run a flow action, turning controller errors into a readable message. */
+    async _runFlowAction(name, fn) {
+        try {
+            return await fn();
+        } catch (error) {
+            const parsed = ErrorHandler.parseError(error);
+            this.error(`[${name}] ${parsed.message}`);
+            this._notifyError(error);
+            if (parsed.isAuthError) {
+                await this._appLogin();
+            }
+            throw new Error(parsed.message);
+        }
     }
 
     async _initFlowTriggers() {

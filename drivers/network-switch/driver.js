@@ -3,6 +3,7 @@
 const {Driver} = require('homey');
 const UnifiConstants = require("../../library/constants");
 const Homey = require("homey");
+const ErrorHandler = require("../../library/error-handler");
 
 class NetworkSwitch extends Driver {
 
@@ -10,7 +11,65 @@ class NetworkSwitch extends Driver {
      * onInit is called when the driver is initialized.
      */
     async onInit() {
+        this._initFlowCards();
         this.log('Network-Switch has been initialized');
+    }
+
+    _initFlowCards() {
+        const portAutocomplete = (includeAny) => async (query, args) => {
+            const ports = args.device ? args.device.getPorts() : [];
+            const items = ports.map(port => ({id: port.idx, name: port.name}));
+            if (includeAny) items.unshift({id: 0, name: this.homey.__('flow.any_port')});
+            const q = (query || '').toLowerCase();
+            return items.filter(item => item.name.toLowerCase().includes(q));
+        };
+        const portMatches = (args, state) => args.port && (args.port.id === 0 || args.port.id === state.port);
+
+        this.portLinkUp = this.homey.flow.getDeviceTriggerCard('network_switch_port_link_up');
+        this.portLinkDown = this.homey.flow.getDeviceTriggerCard('network_switch_port_link_down');
+        this.portSpeedChanged = this.homey.flow.getDeviceTriggerCard('network_switch_port_speed_changed');
+        for (const card of [this.portLinkUp, this.portLinkDown, this.portSpeedChanged]) {
+            card.registerArgumentAutocompleteListener('port', portAutocomplete(true));
+            card.registerRunListener(async (args, state) => portMatches(args, state));
+        }
+        this.firmwareUpdateAvailable = this.homey.flow.getDeviceTriggerCard('network_switch_firmware_update_available');
+
+        const portIsUp = this.homey.flow.getConditionCard('network_switch_port_is_up');
+        portIsUp.registerArgumentAutocompleteListener('port', portAutocomplete(false));
+        portIsUp.registerRunListener(async (args) => {
+            const port = args.device.getPort(args.port.id);
+            if (!port) throw new Error(`Port ${args.port.name} not found`);
+            return port.up;
+        });
+
+        const poeAbove = this.homey.flow.getConditionCard('network_switch_port_poe_above');
+        poeAbove.registerArgumentAutocompleteListener('port', portAutocomplete(false));
+        poeAbove.registerRunListener(async (args) => {
+            const port = args.device.getPort(args.port.id);
+            if (!port) throw new Error(`Port ${args.port.name} not found`);
+            return port.poePower > args.watts;
+        });
+
+        this.homey.flow.getActionCard('network_switch_restart').registerRunListener(async (args) => {
+            await this._runAction('network_switch_restart', () => this.homey.app.api.restartDevice(args.device.getData().id));
+        });
+
+        this.homey.flow.getActionCard('network_switch_locate').registerRunListener(async (args) => {
+            await this._runAction('network_switch_locate', () => this.homey.app.api.setDeviceLocate(args.device.getData().id, args.state === 'on'));
+        });
+    }
+
+    async _runAction(name, fn) {
+        try {
+            await fn();
+        } catch (error) {
+            const parsed = ErrorHandler.parseError(error);
+            this.homey.app.error(`[${name}] ${parsed.message}`);
+            if (parsed.isAuthError) {
+                await this.homey.app._appLogin();
+            }
+            throw new Error(parsed.message);
+        }
     }
 
     /**

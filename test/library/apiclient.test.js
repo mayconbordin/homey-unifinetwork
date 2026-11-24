@@ -168,5 +168,68 @@ describe('ApiClient', () => {
             await expect(client.getWebsocketSession('192.168.1.1', 443, '', '', 'default', false)).resolves.toBeNull();
         });
     });
+
+    describe('integration API features', () => {
+        let unifi;
+
+        beforeEach(() => {
+            client.setUnifiObject('192.168.1.1', 443, '', '', 'default', false, 'test-key');
+            unifi = client.unifi;
+            unifi.getIntegrationSiteId = jest.fn().mockResolvedValue('site-uuid');
+        });
+
+        it('restartDevice() sends the RESTART action for the device UUID', async () => {
+            unifi.getIntegrationDeviceId = jest.fn().mockResolvedValue({siteId: 'site-uuid', deviceId: 'dev-uuid'});
+            unifi.integration = jest.fn().mockResolvedValue({});
+            await client.restartDevice('aa:bb:cc:11:22:33');
+            expect(unifi.integration).toHaveBeenCalledWith('POST', '/sites/site-uuid/devices/dev-uuid/actions', {action: 'RESTART'});
+        });
+
+        it('setDeviceLocate() sends set-locate / unset-locate', async () => {
+            unifi._legacy = jest.fn().mockResolvedValue([]);
+            await client.setDeviceLocate('AA:BB:CC:11:22:33', true);
+            await client.setDeviceLocate('AA:BB:CC:11:22:33', false);
+            expect(unifi._legacy).toHaveBeenNthCalledWith(1, 'POST', '/api/s/<SITE>/cmd/devmgr', {cmd: 'set-locate', mac: 'aa:bb:cc:11:22:33'});
+            expect(unifi._legacy).toHaveBeenNthCalledWith(2, 'POST', '/api/s/<SITE>/cmd/devmgr', {cmd: 'unset-locate', mac: 'aa:bb:cc:11:22:33'});
+        });
+
+        it('getFirewallPolicies() returns only user-defined policies', async () => {
+            unifi.integrationList = jest.fn().mockResolvedValue([
+                {id: '1', name: 'Kids bedtime', metadata: {origin: 'USER_DEFINED'}},
+                {id: '2', name: 'Block invalid', metadata: {origin: 'SYSTEM_DEFINED'}},
+            ]);
+            const policies = await client.getFirewallPolicies();
+            expect(policies.map(p => p.id)).toEqual(['1']);
+        });
+
+        it('setFirewallPolicyEnabled() PUTs the full policy without read-only fields', async () => {
+            const policy = {
+                id: 'p1', index: 10000, metadata: {origin: 'USER_DEFINED'}, enabled: false, name: 'Kids bedtime',
+                action: {type: 'BLOCK'}, source: {zoneId: 'z1'}, destination: {zoneId: 'z2'},
+                ipProtocolScope: {ipVersion: 'IPV4_AND_IPV6'}, loggingEnabled: false,
+            };
+            unifi.integration = jest.fn().mockResolvedValueOnce(policy).mockResolvedValueOnce({});
+            await client.setFirewallPolicyEnabled('p1', true);
+            expect(unifi.integration).toHaveBeenNthCalledWith(1, 'GET', '/sites/site-uuid/firewall/policies/p1');
+            expect(unifi.integration).toHaveBeenNthCalledWith(2, 'PUT', '/sites/site-uuid/firewall/policies/p1', {
+                enabled: true, name: 'Kids bedtime', action: {type: 'BLOCK'}, source: {zoneId: 'z1'},
+                destination: {zoneId: 'z2'}, ipProtocolScope: {ipVersion: 'IPV4_AND_IPV6'}, loggingEnabled: false,
+            });
+        });
+
+        it('createVoucher() posts a single voucher and returns it', async () => {
+            unifi.integration = jest.fn().mockResolvedValue({vouchers: [{id: 'v1', code: '9472288777'}]});
+            const voucher = await client.createVoucher({name: 'Guests', timeLimitMinutes: 1440, authorizedGuestLimit: 2});
+            expect(unifi.integration).toHaveBeenCalledWith('POST', '/sites/site-uuid/hotspot/vouchers',
+                {name: 'Guests', timeLimitMinutes: 1440, count: 1, authorizedGuestLimit: 2});
+            expect(voucher.code).toBe('9472288777');
+        });
+
+        it('firewall and vouchers require an API key', async () => {
+            client.setUnifiObject('192.168.1.1', 443, 'admin', 'password', 'default');
+            await expect(client.getFirewallPolicies()).rejects.toThrow('requires an API key');
+            await expect(client.createVoucher({name: 'x', timeLimitMinutes: 1})).rejects.toThrow('requires an API key');
+        });
+    });
 });
 

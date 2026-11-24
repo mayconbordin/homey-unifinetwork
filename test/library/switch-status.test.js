@@ -1,6 +1,6 @@
 'use strict';
 
-const {parseSwitchStatus, toMbps} = require('../../library/switch-status');
+const {parseSwitchStatus, parseFirmware, toMbps} = require('../../library/switch-status');
 
 // Trimmed from a USW Pro XG 8 PoE stat/device entry (Network 11.0.99)
 function xg8poe(overrides = {}) {
@@ -57,12 +57,24 @@ describe('parseSwitchStatus', () => {
 
     test('maps ports using port_idx and UniFi names', () => {
         const {ports} = parseSwitchStatus(xg8poe());
-        expect(ports).toEqual([
+        expect(ports.map(({idx, name, up, poeCapable, poeEnabled}) => ({idx, name, up, poeCapable, poeEnabled}))).toEqual([
             {idx: 1, name: 'Port 1', up: true, poeCapable: true, poeEnabled: true},
             {idx: 5, name: 'Port 5', up: false, poeCapable: true, poeEnabled: false},
             {idx: 9, name: 'SFP+ 1', up: true, poeCapable: false, poeEnabled: false},
             {idx: 10, name: 'SFP+ 2', up: true, poeCapable: false, poeEnabled: false},
         ]);
+    });
+
+    test('includes port speed, PoE power and the last connected device', () => {
+        const {ports} = parseSwitchStatus(xg8poe({
+            port_table: [
+                {port_idx: 1, up: true, speed: 1000, poe_power: '15.64', last_connection: {mac: 'aa:bb', ip: '192.168.1.25'}},
+                {port_idx: 2, up: false, speed: 10000, poe_power: '0.00'},
+            ],
+        }));
+        expect(ports[0]).toMatchObject({speed: 1000, poePower: 15.64, connectedMac: 'aa:bb', connectedIp: '192.168.1.25'});
+        // A down port reports speed 0 even if UniFi still has the last negotiated speed
+        expect(ports[1]).toMatchObject({speed: 0, poePower: 0, connectedMac: '', connectedIp: ''});
     });
 
     test('omits sensors the switch does not have', () => {
@@ -97,5 +109,17 @@ describe('toMbps', () => {
         expect(toMbps(1250000)).toBe(10);
         expect(toMbps('125000')).toBe(1);
         expect(toMbps(undefined)).toBeNull();
+    });
+});
+
+describe('parseFirmware', () => {
+    test('reports an available update', () => {
+        expect(parseFirmware({displayable_version: '7.5.15', upgradable: true, upgrade_to_firmware: '7.6.11.17272'}))
+            .toEqual({version: '7.5.15', updateAvailable: true, latestVersion: '7.6.11.17272'});
+    });
+
+    test('no update when upgradable is false or the target is missing', () => {
+        expect(parseFirmware({version: '7.6.11', upgradable: false}).updateAvailable).toBe(false);
+        expect(parseFirmware({version: '7.6.11', upgradable: true}).updateAvailable).toBe(false);
     });
 });

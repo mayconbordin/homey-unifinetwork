@@ -86,5 +86,8 @@
         "measure_tx_bytes_5g": "Traffico TX 5 GHz (MB)",
         "measure_rx_bytes_6g": "Traffico RX 6 GHz (MB)",
         "measure_tx_bytes_6g": "Traffico TX 6 GHz (MB)"
-    }
+    },
+  "flow": {
+    "any_port": "Qualsiasi porta"
+  }
 }
