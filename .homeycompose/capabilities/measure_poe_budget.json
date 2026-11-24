@@ -1,0 +1,19 @@
+{
+  "type": "number",
+  "title": {
+    "en": "PoE budget",
+    "nl": "PoE-budget",
+    "de": "PoE-Budget",
+    "pt": "Orçamento PoE"
+  },
+  "units": {
+    "en": "W"
+  },
+  "getable": true,
+  "setable": false,
+  "uiComponent": "sensor",
+  "insights": true,
+  "min": 0,
+  "decimals": 0,
+  "icon": "./assets/lightning-bolt-outline.svg"
+}

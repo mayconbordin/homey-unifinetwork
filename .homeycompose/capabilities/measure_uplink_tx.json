@@ -1,0 +1,19 @@
+{
+  "type": "number",
+  "title": {
+    "en": "Uplink upload",
+    "nl": "Uplink upload",
+    "de": "Uplink-Upload",
+    "pt": "Upload do uplink"
+  },
+  "units": {
+    "en": "Mbit/s"
+  },
+  "getable": true,
+  "setable": false,
+  "uiComponent": "sensor",
+  "insights": true,
+  "min": 0,
+  "decimals": 2,
+  "icon": "./assets/traffic.svg"
+}

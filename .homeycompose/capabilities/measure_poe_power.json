@@ -1,0 +1,19 @@
+{
+  "type": "number",
+  "title": {
+    "en": "PoE power used",
+    "nl": "PoE-vermogen in gebruik",
+    "de": "Genutzte PoE-Leistung",
+    "pt": "Potência PoE usada"
+  },
+  "units": {
+    "en": "W"
+  },
+  "getable": true,
+  "setable": false,
+  "uiComponent": "sensor",
+  "insights": true,
+  "min": 0,
+  "decimals": 1,
+  "icon": "./assets/lightning-bolt.svg"
+}

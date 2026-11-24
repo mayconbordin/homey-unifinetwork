@@ -16,7 +16,7 @@
     "pl": "Stan PoE"
   },
   "getable": true,
-  "setable": false,
+  "setable": true,
   "icon": "./assets/lightning-bolt-outline.svg",
   "uiComponent": "button",
   "uiQuickAction": true

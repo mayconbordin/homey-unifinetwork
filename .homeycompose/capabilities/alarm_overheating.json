@@ -1,0 +1,26 @@
+{
+  "type": "boolean",
+  "title": {
+    "en": "Overheating",
+    "nl": "Oververhit",
+    "de": "Überhitzt",
+    "pt": "Superaquecimento"
+  },
+  "getable": true,
+  "setable": false,
+  "uiComponent": "sensor",
+  "insights": true,
+  "insightsTitleTrue": {
+    "en": "Overheating",
+    "nl": "Oververhit",
+    "de": "Überhitzt",
+    "pt": "Superaquecendo"
+  },
+  "insightsTitleFalse": {
+    "en": "Temperature normal",
+    "nl": "Temperatuur normaal",
+    "de": "Temperatur normal",
+    "pt": "Temperatura normal"
+  },
+  "icon": "./assets/cpu.svg"
+}

@@ -2,215 +2,188 @@
 
 const {Device} = require('homey');
 const PoePowerMixin = require('../../library/poe-power-mixin');
+const {parseSwitchStatus} = require('../../library/switch-status');
+
+// Real-time updates arrive over the WebSocket; polling is a fallback for when
+// it is not available (API key without username/password).
+const POLL_INTERVAL_MS = 60 * 1000;
+
+// Bump to rebuild capabilities in SENSOR_CAPABILITIES order on existing devices.
+const CAPABILITY_LAYOUT_VERSION = 3;
+
+// Device-level sensors, in display order. Each is only added once the switch reports it.
+const SENSOR_CAPABILITIES = [
+    'connected',
+    'ipAddress',
+    'ports',
+    'uptime',
+    'measure_connected_clients',
+    'measure_poe_power',
+    'measure_poe_budget',
+    'measure_uplink_rx',
+    'measure_uplink_tx',
+    'measure_device_temperature',
+    'alarm_overheating',
+    'measure_fan_level',
+    'measure_cpu_usage',
+    'measure_memory_usage',
+];
 
 class NetworkSwitchDevice extends PoePowerMixin(Device) {
 
-    /**
-     * onInit is called when the device is initialized.
-     */
     async onInit() {
+        this._capabilityQueue = Promise.resolve();
+        this._poeListeners = new Set();
+        this._ready = false; // ignore real-time updates until _migrate() has finished
         await this.initPoeMeter(); // restore kWh total from store (from PoePowerMixin)
         await this.waitForBootstrap();
-
-        this.registerCapabilityListener("poe", async (value) => {
-            this.homey.app.debug(`${JSON.stringify(value)}`);
-            if (value) {
-                // PoE enable — not yet implemented
-            }
-
-        });
-
         this.log('Network-Switch has been initialized');
     }
 
     async waitForBootstrap() {
         if (this.homey.app.loggedIn === true) {
-            await this._createMissingCapabilities();
+            await this._enqueue(() => this._migrate());
+            this._ready = true;
             await this.getDeviceStatus();
+            if (!this._pollInterval) {
+                this._pollInterval = this.homey.setInterval(() => this.getDeviceStatus(), POLL_INTERVAL_MS);
+            }
         } else {
             this.homey.setTimeout(this.waitForBootstrap.bind(this), 250);
         }
     }
 
-    /**
-     * onAdded is called when the user adds the device, called just after pairing.
-     */
     async onAdded() {
         this.log('Network-Switch has been added');
     }
 
-    /**
-     * onSettings is called when the user updates the device's settings.
-     * @param {object} event the onSettings event data
-     * @param {object} event.oldSettings The old settings object
-     * @param {object} event.newSettings The new settings object
-     * @param {string[]} event.changedKeys An array of keys changed since the previous version
-     * @returns {Promise<string|void>} return a custom message that will be displayed
-     */
-    async onSettings({oldSettings, newSettings, changedKeys}) {
-        this.log('CableDevice settings where changed');
-    }
-
-    /**
-     * onRenamed is called when the user updates the device's name.
-     * This method can be used this to synchronise the name to the device.
-     * @param {string} name The new name
-     */
-    async onRenamed(name) {
-        this.log('CableDevice was renamed');
-    }
-
-    /**
-     * onDeleted is called when the user deleted the device.
-     */
     async onDeleted() {
         this.destroyPoeMeter();
+        if (this._pollInterval) {
+            this.homey.clearInterval(this._pollInterval);
+            this._pollInterval = null;
+        }
         this.log('Network-Switch has been deleted');
     }
 
-    async _createMissingCapabilities() {
+    /** Clean up devices paired with older versions of the app. */
+    async _migrate() {
         if (this.getClass() !== 'sensor') {
-            this.homey.app.debug(`changed class to sensor for ${this.getName()}`);
-            this.setClass('sensor').catch(this.error);
+            await this.setClass('sensor').catch(this.error);
         }
-
-        if (!this.hasCapability('ipAddress')) {
-            this.addCapability('ipAddress').catch(this.error);
-            this.homey.app.debug(`created capability ipAddress for ${this.getName()}`);
+        // Old versions exposed an on/off button that did nothing
+        if (this.hasCapability('onoff')) {
+            await this.removeCapability('onoff').catch(this.error);
         }
-
-        if (!this.hasCapability('connected')) {
-            this.addCapability('connected').catch(this.error);
-            this.homey.app.debug(`created capability connected for ${this.getName()}`);
-        }
-
-        if (!this.hasCapability('ports')) {
-            this.addCapability('ports').catch(this.error);
-            this.homey.app.debug(`created capability ports for ${this.getName()}`);
-        }
-
-        if (this.homey.app.loggedIn === true) {
-            this.homey.app.api.unifi.getAccessDevices(this.getData().id).then(device => {
-                const networkSwitch = device.filter(obj => {
-                    return obj.mac === this.getData().id
-                });
-
-                if (typeof networkSwitch[0].port_table !== 'undefined') {
-                    for (let i = 1; i < networkSwitch[0].port_table.length + 1; i++) {
-
-                        if (!this.hasCapability('port.port_' + i)) {
-                            this.addCapability('port.port_' + i).catch(this.error);
-                            this.homey.app.debug(`created capability port_${i} for ${this.getName()}`);
-                            new Promise(r => setTimeout(r, 500));
-                        }
-
-                        if (networkSwitch[0].port_table[i - 1].port_poe === true) {
-                            if (!this.hasCapability('poe.port_' + i)) {
-                                this.addCapability('poe.port_' + i).catch(this.error);
-                                this.homey.app.debug(`created capability poe_${i} for ${this.getName()}`);
-                                new Promise(r => setTimeout(r, 500));
-                            }
-                        }
-
-                    }
+        // Old versions added capabilities in random order (and only some of them).
+        // Remove them once so they are re-added in display order.
+        if (this.getStoreValue('capabilityLayout') !== CAPABILITY_LAYOUT_VERSION) {
+            for (const cap of this.getCapabilities()) {
+                if (SENSOR_CAPABILITIES.includes(cap) || cap.startsWith('port.') || cap.startsWith('poe.')) {
+                    await this.removeCapability(cap).catch(this.error);
+                    await this.unsetStoreValue(`title:${cap}`).catch(this.error);
                 }
-            }).catch(error => this.homey.app.debug(error));
-        }
-
-    }
-
-    onIsConnected(isConnected) {
-        if (this.hasCapability('connected') && this.getCapabilityValue('connected') !== isConnected) {
-            this.setCapabilityValue('connected', isConnected).catch(this.error);
+            }
+            await this.setStoreValue('capabilityLayout', CAPABILITY_LAYOUT_VERSION);
         }
     }
 
-    onIPChange(data) {
-        if (this.hasCapability('ipAddress')) {
-            this.setCapabilityValue('ipAddress', data.ip).catch(this.error);
-        }
+    /**
+     * Run capability changes one at a time. Homey rejects concurrent
+     * addCapability calls, which used to leave switches with only a few ports.
+     */
+    _enqueue(task) {
+        this._capabilityQueue = this._capabilityQueue.then(task).catch(this.error);
+        return this._capabilityQueue;
     }
 
-    onUPChange(data, port) {
-        if (this.hasCapability('port.port_' + port)) {
-            this.setCapabilityValue('port.port_' + port, data).catch(this.error);
-        }
-    }
-
-    onPOEChange(data, port) {
-        if (this.hasCapability('poe.port_' + port)) {
-            this.setCapabilityValue('poe.port_' + port, data).catch(this.error);
-        }
-    }
-
-    onAmountPortsChange(data) {
-        if (this.hasCapability('ports')) {
-            this.setCapabilityValue('ports', data).catch(this.error);
-        }
-    }
-
-    onStatusChange(data) {
-        if (typeof data.state === 'number') {
-            this.onIsConnected(data.state === 1);
+    async _ensureCapabilities(status) {
+        for (const cap of SENSOR_CAPABILITIES) {
+            if (cap in status.caps && !this.hasCapability(cap)) {
+                await this.addCapability(cap);
+            }
         }
 
-        if (typeof data.port_table !== 'undefined') {
+        for (const port of status.ports) {
+            const linkCap = `port.port_${port.idx}`;
+            if (!this.hasCapability(linkCap)) await this.addCapability(linkCap);
+            await this._setTitle(linkCap, port.name);
 
-            this.onAmountPortsChange(data.port_table.length);
-
-            for (let i = 1; i < data.port_table.length + 1; i++) {
-                if (typeof data.port_table[i - 1].up !== 'undefined') {
-                    this.onUPChange(data.port_table[i - 1].up, i);
-                }
-
-                if (typeof data.port_table[i - 1].poe_enable !== 'undefined') {
-                    this.onPOEChange(data.port_table[i - 1].poe_enable, i);
-                }
+            if (port.poeCapable) {
+                const poeCap = `poe.port_${port.idx}`;
+                if (!this.hasCapability(poeCap)) await this.addCapability(poeCap);
+                await this._setTitle(poeCap, `PoE ${port.name}`);
+                this._registerPoeListener(poeCap, port.idx);
             }
         }
     }
 
-    getDeviceStatus() {
-        if (this.homey.app.loggedIn === true) {
-            this.homey.app.api.unifi.getAccessDevices(this.getData().id).then(device => {
-                // Filter by MAC so we always use this switch's own data, not another device at index 0
-                const networkSwitch = device.filter(obj => obj.mac === this.getData().id);
-                if (!networkSwitch[0]) return;
+    /** Use the port name from UniFi (e.g. "SFP+ 1", or a custom name) as the capability title. */
+    async _setTitle(cap, title) {
+        const key = `title:${cap}`;
+        if (this.getStoreValue(key) === title) return;
+        await this.setCapabilityOptions(cap, {title: {en: title}});
+        await this.setStoreValue(key, title);
+    }
 
-                if (typeof networkSwitch[0].ip !== 'undefined') {
-                    this.onIPChange(networkSwitch[0]);
-                }
-                if (typeof networkSwitch[0].state === 'number') {
-                    this.onIsConnected(networkSwitch[0].state === 1);
-                }
+    _registerPoeListener(cap, portIdx) {
+        if (this._poeListeners.has(cap)) return;
+        this._poeListeners.add(cap);
+        this.registerCapabilityListener(cap, async (value) => {
+            const api = this.homey.app.api;
+            const mac = this.getData().id;
+            if (value) {
+                await api.powerOnDevice(mac, portIdx);
+            } else {
+                await api.powerOffDevice(mac, portIdx);
+            }
+        });
+    }
 
-                if (typeof networkSwitch[0].port_table !== 'undefined') {
-                    this.onAmountPortsChange(networkSwitch[0].port_table.length);
-                    for (let i = 1; i < networkSwitch[0].port_table.length + 1; i++) {
-                        if (typeof networkSwitch[0].port_table[i - 1].up !== 'undefined') {
-                            this.onUPChange(networkSwitch[0].port_table[i - 1].up, i);
-                        }
-                        if (typeof networkSwitch[0].port_table[i - 1].poe_enable !== 'undefined') {
-                            this.onPOEChange(networkSwitch[0].port_table[i - 1].poe_enable, i);
-                        }
-                    }
-                }
+    _setValue(cap, value) {
+        if (!this.hasCapability(cap) || value === null || typeof value === 'undefined') return;
+        if (this.getCapabilityValue(cap) === value) return;
+        this.setCapabilityValue(cap, value).catch(this.error);
+    }
 
-                // If this switch is itself PoE-powered by an upstream switch, track its own draw
-                this.updatePoeUplink(networkSwitch[0]);
-                if (this._swMac && this._swPort) {
-                    this._fetchPoeData(this._swMac, this._swPort);
-                }
+    async _applyStatus(data) {
+        const status = parseSwitchStatus(data);
+        await this._enqueue(() => this._ensureCapabilities(status));
 
-            }).catch(error => this.homey.app.debug(error));
+        for (const [cap, value] of Object.entries(status.caps)) {
+            this._setValue(cap, value);
+        }
+        for (const port of status.ports) {
+            this._setValue(`port.port_${port.idx}`, port.up);
+            if (port.poeCapable) this._setValue(`poe.port_${port.idx}`, port.poeEnabled);
         }
     }
 
-    onUpdateMessagePayload(playloadMessage) {
-        if (typeof playloadMessage.ip !== 'undefined') {
-            this.onIPChange(playloadMessage);
-        }
+    /** Real-time update from a `device:sync` WebSocket message. */
+    onStatusChange(data) {
+        if (!this._ready) return;
+        this._applyStatus(data).catch(this.error);
+    }
 
+    async getDeviceStatus() {
+        if (this.homey.app.loggedIn !== true) return;
+        const mac = this.getData().id;
+        try {
+            const devices = await this.homey.app.api.unifi.getAccessDevices(mac);
+            // Filter by MAC so we always use this switch's own data
+            const data = (devices || []).find(obj => obj.mac === mac);
+            if (!data) return;
+
+            await this._applyStatus(data);
+
+            // If this switch is itself PoE-powered by an upstream switch, track its own draw
+            this.updatePoeUplink(data);
+            if (this._swMac && this._swPort) {
+                this._fetchPoeData(this._swMac, this._swPort);
+            }
+        } catch (error) {
+            this.homey.app.debug(error);
+        }
     }
 }
 

@@ -2945,80 +2945,6 @@
         "pt": "Switch de rede",
         "pl": "Przełącznik sieciowy"
       },
-      "mobile": {
-        "components": [
-          {
-            "id": "icon"
-          },
-          {
-            "id": "sensor",
-            "capabilities": [
-              "onoff",
-              "ports"
-            ],
-            "capabilitiesOptions": {
-              "onoff": {
-                "title": {
-                  "en": "Connection state",
-                  "nl": "Verbindingsstatus",
-                  "es": "Estado de la conexión",
-                  "de": "Verbindungsstatus",
-                  "fr": "État de la connexion",
-                  "it": "Stato della connessione",
-                  "da": "Forbindelsesstatus",
-                  "sv": "Anslutningsstatus",
-                  "no": "Tilkoblingsstatus",
-                  "ko": "연결 상태",
-                  "ru": "Состояние подключения",
-                  "pt": "Estado da conexão",
-                  "pl": "Stan połączenia"
-                }
-              },
-              "getable": true,
-              "setable": false
-            },
-            "options": {
-              "icons": {
-                "connected": "assets/lan.svg"
-              },
-              "connected": {
-                "noblink": false,
-                "invert": true,
-                "label": {
-                  "true": {
-                    "en": "Connected",
-                    "es": "Conectado",
-                    "de": "Verbunden",
-                    "fr": "Connecté",
-                    "it": "Connesso",
-                    "da": "Tilsluttet",
-                    "sv": "Ansluten",
-                    "no": "Tilkoblet",
-                    "ko": "연결됨",
-                    "ru": "Подключено",
-                    "pt": "Conectado",
-                    "pl": "Connected"
-                  },
-                  "false": {
-                    "en": "Disconnected",
-                    "es": "Desconectado",
-                    "de": "Getrennt",
-                    "fr": "Déconnecté",
-                    "it": "Disconnesso",
-                    "da": "Frakoblet",
-                    "sv": "Frånkopplad",
-                    "no": "Frakoblet",
-                    "ko": "연결 끊김",
-                    "ru": "Отключено",
-                    "pt": "Desconectado",
-                    "pl": "Disconnected"
-                  }
-                }
-              }
-            }
-          }
-        ]
-      },
       "images": {
         "xlarge": "drivers/network-switch/assets/images/xlarge.png",
         "large": "drivers/network-switch/assets/images/large.png",
@@ -3026,28 +2952,11 @@
       },
       "class": "sensor",
       "capabilities": [
-        "onoff"
+        "connected",
+        "ipAddress",
+        "ports"
       ],
       "capabilitiesOptions": {
-        "onoff": {
-          "title": {
-            "en": "Connection state",
-            "nl": "Verbindingsstatus",
-            "es": "Estado de la conexión",
-            "de": "Verbindungsstatus",
-            "fr": "État de la connexion",
-            "it": "Stato della connessione",
-            "da": "Forbindelsesstatus",
-            "sv": "Anslutningsstatus",
-            "no": "Tilkoblingsstatus",
-            "ko": "연결 상태",
-            "ru": "Состояние подключения",
-            "pt": "Estado da conexão",
-            "pl": "Stan połączenia"
-          },
-          "getable": true,
-          "setable": false
-        },
         "port.port_1": {
           "title": {
             "en": "Network Port  1",
@@ -4880,6 +4789,32 @@
       "uiComponent": "toggle",
       "uiQuickAction": true
     },
+    "alarm_overheating": {
+      "type": "boolean",
+      "title": {
+        "en": "Overheating",
+        "nl": "Oververhit",
+        "de": "Überhitzt",
+        "pt": "Superaquecimento"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "insights": true,
+      "insightsTitleTrue": {
+        "en": "Overheating",
+        "nl": "Oververhit",
+        "de": "Überhitzt",
+        "pt": "Superaquecendo"
+      },
+      "insightsTitleFalse": {
+        "en": "Temperature normal",
+        "nl": "Temperatuur normaal",
+        "de": "Temperatur normal",
+        "pt": "Temperatura normal"
+      },
+      "icon": "./assets/cpu.svg"
+    },
     "ap": {
       "type": "string",
       "title": {
@@ -5013,6 +4948,123 @@
       "min": 0,
       "decimals": 0,
       "icon": "./assets/connected.svg"
+    },
+    "measure_cpu_usage": {
+      "type": "number",
+      "title": {
+        "en": "CPU usage",
+        "nl": "CPU-gebruik",
+        "de": "CPU-Auslastung",
+        "pt": "Uso de CPU"
+      },
+      "units": {
+        "en": "%"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "insights": true,
+      "min": 0,
+      "decimals": 1,
+      "icon": "./assets/cpu.svg",
+      "max": 100
+    },
+    "measure_device_temperature": {
+      "type": "number",
+      "title": {
+        "en": "Device temperature",
+        "nl": "Apparaattemperatuur",
+        "de": "Gerätetemperatur",
+        "pt": "Temperatura do dispositivo"
+      },
+      "units": {
+        "en": "°C"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "insights": true,
+      "min": 0,
+      "decimals": 0,
+      "icon": "./assets/cpu.svg"
+    },
+    "measure_fan_level": {
+      "type": "number",
+      "title": {
+        "en": "Fan level",
+        "nl": "Ventilatorniveau",
+        "de": "Lüfterstufe",
+        "pt": "Nível da ventoinha"
+      },
+      "units": {
+        "en": "%"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "insights": true,
+      "min": 0,
+      "decimals": 0,
+      "icon": "./assets/usage.svg",
+      "max": 100
+    },
+    "measure_memory_usage": {
+      "type": "number",
+      "title": {
+        "en": "Memory usage",
+        "nl": "Geheugengebruik",
+        "de": "Speicherauslastung",
+        "pt": "Uso de memória"
+      },
+      "units": {
+        "en": "%"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "insights": true,
+      "min": 0,
+      "decimals": 1,
+      "icon": "./assets/usage.svg",
+      "max": 100
+    },
+    "measure_poe_budget": {
+      "type": "number",
+      "title": {
+        "en": "PoE budget",
+        "nl": "PoE-budget",
+        "de": "PoE-Budget",
+        "pt": "Orçamento PoE"
+      },
+      "units": {
+        "en": "W"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "insights": true,
+      "min": 0,
+      "decimals": 0,
+      "icon": "./assets/lightning-bolt-outline.svg"
+    },
+    "measure_poe_power": {
+      "type": "number",
+      "title": {
+        "en": "PoE power used",
+        "nl": "PoE-vermogen in gebruik",
+        "de": "Genutzte PoE-Leistung",
+        "pt": "Potência PoE usada"
+      },
+      "units": {
+        "en": "W"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "insights": true,
+      "min": 0,
+      "decimals": 1,
+      "icon": "./assets/lightning-bolt.svg"
     },
     "measure_rssi": {
       "type": "number",
@@ -5380,6 +5432,44 @@
       "min": 0,
       "decimals": 2
     },
+    "measure_uplink_rx": {
+      "type": "number",
+      "title": {
+        "en": "Uplink download",
+        "nl": "Uplink download",
+        "de": "Uplink-Download",
+        "pt": "Download do uplink"
+      },
+      "units": {
+        "en": "Mbit/s"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "insights": true,
+      "min": 0,
+      "decimals": 2,
+      "icon": "./assets/traffic.svg"
+    },
+    "measure_uplink_tx": {
+      "type": "number",
+      "title": {
+        "en": "Uplink upload",
+        "nl": "Uplink upload",
+        "de": "Uplink-Upload",
+        "pt": "Upload do uplink"
+      },
+      "units": {
+        "en": "Mbit/s"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "insights": true,
+      "min": 0,
+      "decimals": 2,
+      "icon": "./assets/traffic.svg"
+    },
     "poe": {
       "type": "boolean",
       "title": {
@@ -5398,7 +5488,7 @@
         "pl": "Stan PoE"
       },
       "getable": true,
-      "setable": false,
+      "setable": true,
       "icon": "./assets/lightning-bolt-outline.svg",
       "uiComponent": "button",
       "uiQuickAction": true

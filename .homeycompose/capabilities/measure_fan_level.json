@@ -1,0 +1,20 @@
+{
+  "type": "number",
+  "title": {
+    "en": "Fan level",
+    "nl": "Ventilatorniveau",
+    "de": "Lüfterstufe",
+    "pt": "Nível da ventoinha"
+  },
+  "units": {
+    "en": "%"
+  },
+  "getable": true,
+  "setable": false,
+  "uiComponent": "sensor",
+  "insights": true,
+  "min": 0,
+  "decimals": 0,
+  "icon": "./assets/usage.svg",
+  "max": 100
+}

@@ -1,0 +1,19 @@
+{
+  "type": "number",
+  "title": {
+    "en": "Device temperature",
+    "nl": "Apparaattemperatuur",
+    "de": "Gerätetemperatur",
+    "pt": "Temperatura do dispositivo"
+  },
+  "units": {
+    "en": "°C"
+  },
+  "getable": true,
+  "setable": false,
+  "uiComponent": "sensor",
+  "insights": true,
+  "min": 0,
+  "decimals": 0,
+  "icon": "./assets/cpu.svg"
+}

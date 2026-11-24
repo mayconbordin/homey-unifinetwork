@@ -21,80 +21,6 @@
     "pt": "Switch de rede",
     "pl": "Przełącznik sieciowy"
   },
-  "mobile": {
-    "components": [
-      {
-        "id": "icon"
-      },
-      {
-        "id": "sensor",
-        "capabilities": [
-          "onoff",
-          "ports"
-        ],
-        "capabilitiesOptions": {
-          "onoff": {
-            "title": {
-              "en": "Connection state",
-              "nl": "Verbindingsstatus",
-              "es": "Estado de la conexión",
-              "de": "Verbindungsstatus",
-              "fr": "État de la connexion",
-              "it": "Stato della connessione",
-              "da": "Forbindelsesstatus",
-              "sv": "Anslutningsstatus",
-              "no": "Tilkoblingsstatus",
-              "ko": "연결 상태",
-              "ru": "Состояние подключения",
-              "pt": "Estado da conexão",
-              "pl": "Stan połączenia"
-            }
-          },
-          "getable": true,
-          "setable": false
-        },
-        "options": {
-          "icons": {
-            "connected": "assets/lan.svg"
-          },
-          "connected": {
-            "noblink": false,
-            "invert": true,
-            "label": {
-              "true": {
-                "en": "Connected",
-                "es": "Conectado",
-                "de": "Verbunden",
-                "fr": "Connecté",
-                "it": "Connesso",
-                "da": "Tilsluttet",
-                "sv": "Ansluten",
-                "no": "Tilkoblet",
-                "ko": "연결됨",
-                "ru": "Подключено",
-                "pt": "Conectado",
-                "pl": "Connected"
-              },
-              "false": {
-                "en": "Disconnected",
-                "es": "Desconectado",
-                "de": "Getrennt",
-                "fr": "Déconnecté",
-                "it": "Disconnesso",
-                "da": "Frakoblet",
-                "sv": "Frånkopplad",
-                "no": "Frakoblet",
-                "ko": "연결 끊김",
-                "ru": "Отключено",
-                "pt": "Desconectado",
-                "pl": "Disconnected"
-              }
-            }
-          }
-        }
-      }
-    ]
-  },
   "images": {
     "xlarge": "drivers/network-switch/assets/images/xlarge.png",
     "large": "drivers/network-switch/assets/images/large.png",
@@ -102,28 +28,11 @@
   },
   "class": "sensor",
   "capabilities": [
-    "onoff"
+    "connected",
+    "ipAddress",
+    "ports"
   ],
   "capabilitiesOptions": {
-    "onoff": {
-      "title": {
-        "en": "Connection state",
-        "nl": "Verbindingsstatus",
-        "es": "Estado de la conexión",
-        "de": "Verbindungsstatus",
-        "fr": "État de la connexion",
-        "it": "Stato della connessione",
-        "da": "Forbindelsesstatus",
-        "sv": "Anslutningsstatus",
-        "no": "Tilkoblingsstatus",
-        "ko": "연결 상태",
-        "ru": "Состояние подключения",
-        "pt": "Estado da conexão",
-        "pl": "Stan połączenia"
-      },
-      "getable": true,
-      "setable": false
-    },
     "port.port_1": {
       "title": {
         "en": "Network Port  1",

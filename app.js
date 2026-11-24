@@ -199,7 +199,6 @@ class UnifiNetwork extends Homey.App {
             const switchDevice = switchDriver && switchDriver.getUnifiDeviceById(payload.mac);
             if (switchDevice) {
                 switchDevice.onStatusChange(payload);
-                switchDevice.onUpdateMessagePayload(payload);
             }
         } else if (payload.type === 'uap') {
             const apDriver = getDriver('access-point');
