@@ -1795,6 +1795,349 @@
         ]
       },
       {
+        "id": "gateway_port_link_up",
+        "title": {
+          "en": "A port link went up",
+          "nl": "Een poortverbinding kwam op",
+          "de": "Ein Port-Link ist aktiv geworden",
+          "pt": "O link de uma porta ficou ativo"
+        },
+        "titleFormatted": {
+          "en": "[[port]] link went up",
+          "nl": "[[port]] verbinding kwam op",
+          "de": "[[port]] Link ist aktiv geworden",
+          "pt": "Link da [[port]] ficou ativo"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=gateway"
+          },
+          {
+            "type": "autocomplete",
+            "name": "port",
+            "title": {
+              "en": "Port",
+              "nl": "Poort",
+              "de": "Port",
+              "pt": "Porta"
+            },
+            "placeholder": {
+              "en": "Port",
+              "nl": "Poort",
+              "de": "Port",
+              "pt": "Porta"
+            }
+          }
+        ],
+        "tokens": [
+          {
+            "name": "port_number",
+            "type": "number",
+            "title": {
+              "en": "Port number",
+              "nl": "Poortnummer",
+              "de": "Portnummer",
+              "pt": "Número da porta"
+            },
+            "example": 3
+          },
+          {
+            "name": "port_name",
+            "type": "string",
+            "title": {
+              "en": "Port name",
+              "nl": "Poortnaam",
+              "de": "Portname",
+              "pt": "Nome da porta"
+            },
+            "example": "Port 3"
+          },
+          {
+            "name": "speed",
+            "type": "number",
+            "title": {
+              "en": "Speed (Mbit/s)",
+              "nl": "Snelheid (Mbit/s)",
+              "de": "Geschwindigkeit (Mbit/s)",
+              "pt": "Velocidade (Mbit/s)"
+            },
+            "example": 1000
+          },
+          {
+            "name": "connected_mac",
+            "type": "string",
+            "title": {
+              "en": "Connected device MAC",
+              "nl": "MAC van verbonden apparaat",
+              "de": "MAC des verbundenen Geräts",
+              "pt": "MAC do dispositivo conectado"
+            },
+            "example": "aa:bb:cc:dd:ee:ff"
+          },
+          {
+            "name": "connected_ip",
+            "type": "string",
+            "title": {
+              "en": "Connected device IP",
+              "nl": "IP van verbonden apparaat",
+              "de": "IP des verbundenen Geräts",
+              "pt": "IP do dispositivo conectado"
+            },
+            "example": "192.168.1.20"
+          }
+        ]
+      },
+      {
+        "id": "gateway_port_link_down",
+        "title": {
+          "en": "A port link went down",
+          "nl": "Een poortverbinding viel weg",
+          "de": "Ein Port-Link ist ausgefallen",
+          "pt": "O link de uma porta caiu"
+        },
+        "titleFormatted": {
+          "en": "[[port]] link went down",
+          "nl": "[[port]] verbinding viel weg",
+          "de": "[[port]] Link ist ausgefallen",
+          "pt": "Link da [[port]] caiu"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=gateway"
+          },
+          {
+            "type": "autocomplete",
+            "name": "port",
+            "title": {
+              "en": "Port",
+              "nl": "Poort",
+              "de": "Port",
+              "pt": "Porta"
+            },
+            "placeholder": {
+              "en": "Port",
+              "nl": "Poort",
+              "de": "Port",
+              "pt": "Porta"
+            }
+          }
+        ],
+        "tokens": [
+          {
+            "name": "port_number",
+            "type": "number",
+            "title": {
+              "en": "Port number",
+              "nl": "Poortnummer",
+              "de": "Portnummer",
+              "pt": "Número da porta"
+            },
+            "example": 3
+          },
+          {
+            "name": "port_name",
+            "type": "string",
+            "title": {
+              "en": "Port name",
+              "nl": "Poortnaam",
+              "de": "Portname",
+              "pt": "Nome da porta"
+            },
+            "example": "Port 3"
+          },
+          {
+            "name": "connected_mac",
+            "type": "string",
+            "title": {
+              "en": "Connected device MAC",
+              "nl": "MAC van verbonden apparaat",
+              "de": "MAC des verbundenen Geräts",
+              "pt": "MAC do dispositivo conectado"
+            },
+            "example": "aa:bb:cc:dd:ee:ff"
+          },
+          {
+            "name": "connected_ip",
+            "type": "string",
+            "title": {
+              "en": "Connected device IP",
+              "nl": "IP van verbonden apparaat",
+              "de": "IP des verbundenen Geräts",
+              "pt": "IP do dispositivo conectado"
+            },
+            "example": "192.168.1.20"
+          }
+        ]
+      },
+      {
+        "id": "gateway_port_speed_changed",
+        "title": {
+          "en": "A port's link speed changed",
+          "nl": "Snelheid van een poort veranderde",
+          "de": "Port-Geschwindigkeit hat sich geändert",
+          "pt": "A velocidade de uma porta mudou"
+        },
+        "titleFormatted": {
+          "en": "[[port]] link speed changed",
+          "nl": "Snelheid van [[port]] veranderde",
+          "de": "Geschwindigkeit von [[port]] hat sich geändert",
+          "pt": "A velocidade da [[port]] mudou"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=gateway"
+          },
+          {
+            "type": "autocomplete",
+            "name": "port",
+            "title": {
+              "en": "Port",
+              "nl": "Poort",
+              "de": "Port",
+              "pt": "Porta"
+            },
+            "placeholder": {
+              "en": "Port",
+              "nl": "Poort",
+              "de": "Port",
+              "pt": "Porta"
+            }
+          }
+        ],
+        "tokens": [
+          {
+            "name": "port_number",
+            "type": "number",
+            "title": {
+              "en": "Port number",
+              "nl": "Poortnummer",
+              "de": "Portnummer",
+              "pt": "Número da porta"
+            },
+            "example": 3
+          },
+          {
+            "name": "port_name",
+            "type": "string",
+            "title": {
+              "en": "Port name",
+              "nl": "Poortnaam",
+              "de": "Portname",
+              "pt": "Nome da porta"
+            },
+            "example": "Port 3"
+          },
+          {
+            "name": "speed",
+            "type": "number",
+            "title": {
+              "en": "Speed (Mbit/s)",
+              "nl": "Snelheid (Mbit/s)",
+              "de": "Geschwindigkeit (Mbit/s)",
+              "pt": "Velocidade (Mbit/s)"
+            },
+            "example": 1000
+          },
+          {
+            "name": "previous_speed",
+            "type": "number",
+            "title": {
+              "en": "Previous speed (Mbit/s)",
+              "nl": "Vorige snelheid (Mbit/s)",
+              "de": "Vorherige Geschwindigkeit (Mbit/s)",
+              "pt": "Velocidade anterior (Mbit/s)"
+            },
+            "example": 10000
+          }
+        ]
+      },
+      {
+        "id": "gateway_firmware_update_available",
+        "title": {
+          "en": "A firmware update became available",
+          "nl": "Er is een firmware-update beschikbaar",
+          "de": "Ein Firmware-Update ist verfügbar",
+          "pt": "Uma atualização de firmware ficou disponível"
+        },
+        "tokens": [
+          {
+            "name": "current_version",
+            "type": "string",
+            "title": {
+              "en": "Current version",
+              "nl": "Huidige versie",
+              "de": "Aktuelle Version",
+              "pt": "Versão atual"
+            },
+            "example": "7.5.15"
+          },
+          {
+            "name": "new_version",
+            "type": "string",
+            "title": {
+              "en": "New version",
+              "nl": "Nieuwe versie",
+              "de": "Neue Version",
+              "pt": "Nova versão"
+            },
+            "example": "7.6.11"
+          }
+        ],
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=gateway"
+          }
+        ]
+      },
+      {
+        "id": "gateway_public_ip_changed",
+        "title": {
+          "en": "The public IP address changed",
+          "nl": "Het publieke IP-adres is gewijzigd",
+          "de": "Die öffentliche IP-Adresse hat sich geändert",
+          "pt": "O IP público mudou"
+        },
+        "tokens": [
+          {
+            "name": "public_ip",
+            "type": "string",
+            "title": {
+              "en": "New public IP",
+              "nl": "Nieuw publiek IP",
+              "de": "Neue öffentliche IP",
+              "pt": "Novo IP público"
+            },
+            "example": "203.0.113.10"
+          },
+          {
+            "name": "previous_ip",
+            "type": "string",
+            "title": {
+              "en": "Previous public IP",
+              "nl": "Vorig publiek IP",
+              "de": "Vorherige öffentliche IP",
+              "pt": "IP público anterior"
+            },
+            "example": "203.0.113.9"
+          }
+        ],
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=gateway"
+          }
+        ]
+      },
+      {
         "id": "network_switch_port_link_up",
         "title": {
           "en": "A port link went up",
@@ -2471,6 +2814,101 @@
               "ru": "Точка доступа",
               "pt": "Ponto de acesso",
               "pl": "Access point"
+            }
+          }
+        ]
+      },
+      {
+        "id": "gateway_port_is_up",
+        "title": {
+          "en": "Port link is !{{up|down}}",
+          "nl": "Poortverbinding is !{{actief|inactief}}",
+          "de": "Port-Link ist !{{aktiv|inaktiv}}",
+          "pt": "Link da porta está !{{ativo|inativo}}"
+        },
+        "titleFormatted": {
+          "en": "[[port]] link is !{{up|down}}",
+          "nl": "[[port]] verbinding is !{{actief|inactief}}",
+          "de": "[[port]] Link ist !{{aktiv|inaktiv}}",
+          "pt": "Link da [[port]] está !{{ativo|inativo}}"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=gateway"
+          },
+          {
+            "type": "autocomplete",
+            "name": "port",
+            "title": {
+              "en": "Port",
+              "nl": "Poort",
+              "de": "Port",
+              "pt": "Porta"
+            },
+            "placeholder": {
+              "en": "Port",
+              "nl": "Poort",
+              "de": "Port",
+              "pt": "Porta"
+            }
+          }
+        ]
+      },
+      {
+        "id": "gateway_port_poe_above",
+        "title": {
+          "en": "PoE power on a port is !{{above|not above}}",
+          "nl": "PoE-vermogen op poort is !{{boven|niet boven}}",
+          "de": "PoE-Leistung am Port ist !{{über|nicht über}}",
+          "pt": "Potência PoE na porta !{{está acima|não está acima}}"
+        },
+        "titleFormatted": {
+          "en": "PoE power on [[port]] is !{{above|not above}} [[watts]] W",
+          "nl": "PoE-vermogen op [[port]] is !{{boven|niet boven}} [[watts]] W",
+          "de": "PoE-Leistung an [[port]] ist !{{über|nicht über}} [[watts]] W",
+          "pt": "Potência PoE na [[port]] !{{está acima|não está acima}} de [[watts]] W"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=gateway"
+          },
+          {
+            "type": "autocomplete",
+            "name": "port",
+            "title": {
+              "en": "Port",
+              "nl": "Poort",
+              "de": "Port",
+              "pt": "Porta"
+            },
+            "placeholder": {
+              "en": "Port",
+              "nl": "Poort",
+              "de": "Port",
+              "pt": "Porta"
+            }
+          },
+          {
+            "type": "number",
+            "name": "watts",
+            "min": 0,
+            "max": 100,
+            "step": 0.1,
+            "title": {
+              "en": "Watts",
+              "nl": "Watt",
+              "de": "Watt",
+              "pt": "Watts"
+            },
+            "placeholder": {
+              "en": "5",
+              "nl": "5",
+              "de": "5",
+              "pt": "5"
             }
           }
         ]
@@ -3355,6 +3793,80 @@
         ]
       },
       {
+        "id": "gateway_restart",
+        "title": {
+          "en": "Restart gateway",
+          "nl": "Gateway herstarten",
+          "de": "Gateway neu starten",
+          "pt": "Reiniciar gateway"
+        },
+        "hint": {
+          "en": "Reboots the gateway. Your whole network loses internet access for a few minutes.",
+          "nl": "Herstart de gateway. Je hele netwerk verliest enkele minuten internettoegang.",
+          "de": "Startet das Gateway neu. Das gesamte Netzwerk verliert für einige Minuten den Internetzugang.",
+          "pt": "Reinicia o gateway. Toda a rede fica sem internet por alguns minutos."
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=gateway"
+          }
+        ]
+      },
+      {
+        "id": "gateway_locate",
+        "title": {
+          "en": "Locate LED on/off",
+          "nl": "Locatie-LED aan/uit",
+          "de": "Lokalisierungs-LED an/aus",
+          "pt": "LED de localização liga/desliga"
+        },
+        "titleFormatted": {
+          "en": "[[state]] blinking the locate LED",
+          "nl": "[[state]] knipperen van de locatie-LED",
+          "de": "Blinken der Lokalisierungs-LED [[state]]",
+          "pt": "[[state]] o piscar do LED de localização"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=gateway"
+          },
+          {
+            "type": "dropdown",
+            "name": "state",
+            "title": {
+              "en": "State",
+              "nl": "Status",
+              "de": "Status",
+              "pt": "Estado"
+            },
+            "values": [
+              {
+                "id": "on",
+                "label": {
+                  "en": "Start",
+                  "nl": "Start",
+                  "de": "Starten",
+                  "pt": "Iniciar"
+                }
+              },
+              {
+                "id": "off",
+                "label": {
+                  "en": "Stop",
+                  "nl": "Stop",
+                  "de": "Stoppen",
+                  "pt": "Parar"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
         "id": "network_switch_restart",
         "title": {
           "en": "Restart switch",
@@ -3631,6 +4143,52 @@
           "setable": false
         }
       },
+      "pair": [
+        {
+          "id": "list_clients",
+          "template": "list_devices",
+          "navigation": {
+            "next": "add_clients"
+          }
+        },
+        {
+          "id": "add_clients",
+          "template": "add_devices"
+        }
+      ]
+    },
+    {
+      "id": "gateway",
+      "platforms": [
+        "local"
+      ],
+      "connectivity": [
+        "lan"
+      ],
+      "name": {
+        "en": "Gateway",
+        "nl": "Gateway",
+        "es": "Puerta de enlace",
+        "de": "Gateway",
+        "fr": "Passerelle",
+        "it": "Gateway",
+        "da": "Gateway",
+        "sv": "Gateway",
+        "no": "Gateway",
+        "ko": "게이트웨이",
+        "ru": "Шлюз",
+        "pt": "Gateway",
+        "pl": "Brama"
+      },
+      "images": {
+        "xlarge": "drivers/gateway/assets/images/xlarge.png",
+        "large": "drivers/gateway/assets/images/large.png",
+        "small": "drivers/gateway/assets/images/small.png"
+      },
+      "class": "sensor",
+      "capabilities": [
+        "connected"
+      ],
       "pair": [
         {
           "id": "list_clients",
@@ -5552,6 +6110,32 @@
       },
       "icon": "./assets/cpu.svg"
     },
+    "alarm_wan_down": {
+      "type": "boolean",
+      "title": {
+        "en": "Internet down",
+        "nl": "Internet uitgevallen",
+        "de": "Internet ausgefallen",
+        "pt": "Internet caiu"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "insights": true,
+      "insightsTitleTrue": {
+        "en": "Internet down",
+        "nl": "Internet uitgevallen",
+        "de": "Internet ausgefallen",
+        "pt": "Internet caiu"
+      },
+      "insightsTitleFalse": {
+        "en": "Internet online",
+        "nl": "Internet online",
+        "de": "Internet online",
+        "pt": "Internet online"
+      },
+      "icon": "./assets/router-network.svg"
+    },
     "ap": {
       "type": "string",
       "title": {
@@ -6083,6 +6667,44 @@
       "step": 1,
       "icon": "./assets/signal.svg"
     },
+    "measure_speedtest_download": {
+      "type": "number",
+      "title": {
+        "en": "Speed test download",
+        "nl": "Snelheidstest download",
+        "de": "Speedtest Download",
+        "pt": "Download do teste de velocidade"
+      },
+      "units": {
+        "en": "Mbit/s"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "insights": true,
+      "min": 0,
+      "decimals": 0,
+      "icon": "./assets/traffic.svg"
+    },
+    "measure_speedtest_upload": {
+      "type": "number",
+      "title": {
+        "en": "Speed test upload",
+        "nl": "Snelheidstest upload",
+        "de": "Speedtest Upload",
+        "pt": "Upload do teste de velocidade"
+      },
+      "units": {
+        "en": "Mbit/s"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "insights": true,
+      "min": 0,
+      "decimals": 0,
+      "icon": "./assets/traffic.svg"
+    },
     "measure_tx_bytes": {
       "type": "number",
       "title": {
@@ -6227,6 +6849,45 @@
       "decimals": 2,
       "icon": "./assets/traffic.svg"
     },
+    "measure_wan_availability": {
+      "type": "number",
+      "title": {
+        "en": "Internet availability (24 h)",
+        "nl": "Internetbeschikbaarheid (24 u)",
+        "de": "Internet-Verfügbarkeit (24 h)",
+        "pt": "Disponibilidade da internet (24 h)"
+      },
+      "units": {
+        "en": "%"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "insights": true,
+      "min": 0,
+      "max": 100,
+      "decimals": 2,
+      "icon": "./assets/signal.svg"
+    },
+    "measure_wan_latency": {
+      "type": "number",
+      "title": {
+        "en": "Internet latency",
+        "nl": "Internetlatentie",
+        "de": "Internet-Latenz",
+        "pt": "Latência da internet"
+      },
+      "units": {
+        "en": "ms"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "insights": true,
+      "min": 0,
+      "decimals": 0,
+      "icon": "./assets/signal.svg"
+    },
     "measure_wifi_experience": {
       "type": "number",
       "title": {
@@ -6314,6 +6975,18 @@
       "setable": false,
       "icon": "./assets/router-network.svg"
     },
+    "public_ip": {
+      "type": "string",
+      "title": {
+        "en": "Public IP",
+        "nl": "Publiek IP",
+        "de": "Öffentliche IP",
+        "pt": "IP público"
+      },
+      "getable": true,
+      "setable": false,
+      "icon": "./assets/ipaddress.svg"
+    },
     "radio_proto": {
       "type": "string",
       "title": {
@@ -6360,6 +7033,18 @@
       "min": 0,
       "decimals": 0,
       "icon": "./assets/cpu.svg"
+    },
+    "wan_ip": {
+      "type": "string",
+      "title": {
+        "en": "WAN IP",
+        "nl": "WAN-IP",
+        "de": "WAN-IP",
+        "pt": "IP da WAN"
+      },
+      "getable": true,
+      "setable": false,
+      "icon": "./assets/ipaddress.svg"
     },
     "wifi_name": {
       "type": "string",

@@ -1,0 +1,19 @@
+{
+  "type": "number",
+  "title": {
+    "en": "Internet latency",
+    "nl": "Internetlatentie",
+    "de": "Internet-Latenz",
+    "pt": "Latência da internet"
+  },
+  "units": {
+    "en": "ms"
+  },
+  "getable": true,
+  "setable": false,
+  "uiComponent": "sensor",
+  "insights": true,
+  "min": 0,
+  "decimals": 0,
+  "icon": "./assets/signal.svg"
+}

@@ -1,0 +1,12 @@
+{
+  "type": "string",
+  "title": {
+    "en": "WAN IP",
+    "nl": "WAN-IP",
+    "de": "WAN-IP",
+    "pt": "IP da WAN"
+  },
+  "getable": true,
+  "setable": false,
+  "icon": "./assets/ipaddress.svg"
+}

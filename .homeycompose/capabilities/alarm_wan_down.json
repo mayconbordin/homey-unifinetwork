@@ -1,0 +1,26 @@
+{
+  "type": "boolean",
+  "title": {
+    "en": "Internet down",
+    "nl": "Internet uitgevallen",
+    "de": "Internet ausgefallen",
+    "pt": "Internet caiu"
+  },
+  "getable": true,
+  "setable": false,
+  "uiComponent": "sensor",
+  "insights": true,
+  "insightsTitleTrue": {
+    "en": "Internet down",
+    "nl": "Internet uitgevallen",
+    "de": "Internet ausgefallen",
+    "pt": "Internet caiu"
+  },
+  "insightsTitleFalse": {
+    "en": "Internet online",
+    "nl": "Internet online",
+    "de": "Internet online",
+    "pt": "Internet online"
+  },
+  "icon": "./assets/router-network.svg"
+}

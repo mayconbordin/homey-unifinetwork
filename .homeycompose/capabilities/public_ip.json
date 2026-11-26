@@ -1,0 +1,12 @@
+{
+  "type": "string",
+  "title": {
+    "en": "Public IP",
+    "nl": "Publiek IP",
+    "de": "Öffentliche IP",
+    "pt": "IP público"
+  },
+  "getable": true,
+  "setable": false,
+  "icon": "./assets/ipaddress.svg"
+}

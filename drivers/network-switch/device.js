@@ -32,6 +32,13 @@ const SENSOR_CAPABILITIES = [
 
 class NetworkSwitchDevice extends PoePowerMixin(Device) {
 
+    // Overridden by the gateway driver, which reuses this class
+    get sensorCapabilities() { return SENSOR_CAPABILITIES; }
+    get capabilityLayoutVersion() { return CAPABILITY_LAYOUT_VERSION; }
+    get capabilityTitles() { return {}; }
+    get supportsPoeControl() { return true; }
+    parseStatus(data) { return parseSwitchStatus(data); }
+
     async onInit() {
         this._capabilityQueue = Promise.resolve();
         this._poeListeners = new Set();
@@ -41,7 +48,7 @@ class NetworkSwitchDevice extends PoePowerMixin(Device) {
         this._firmwareUpdateAvailable = null;
         await this.initPoeMeter(); // restore kWh total from store (from PoePowerMixin)
         await this.waitForBootstrap();
-        this.log('Network-Switch has been initialized');
+        this.log(`${this.constructor.name} has been initialized`);
     }
 
     async waitForBootstrap() {
@@ -81,14 +88,14 @@ class NetworkSwitchDevice extends PoePowerMixin(Device) {
         }
         // Old versions added capabilities in random order (and only some of them).
         // Remove them once so they are re-added in display order.
-        if (this.getStoreValue('capabilityLayout') !== CAPABILITY_LAYOUT_VERSION) {
+        if (this.getStoreValue('capabilityLayout') !== this.capabilityLayoutVersion) {
             for (const cap of this.getCapabilities()) {
-                if (SENSOR_CAPABILITIES.includes(cap) || cap.startsWith('port.') || cap.startsWith('poe.')) {
+                if (this.sensorCapabilities.includes(cap) || cap.startsWith('port.') || cap.startsWith('poe.')) {
                     await this.removeCapability(cap).catch(this.error);
                     await this.unsetStoreValue(`title:${cap}`).catch(this.error);
                 }
             }
-            await this.setStoreValue('capabilityLayout', CAPABILITY_LAYOUT_VERSION);
+            await this.setStoreValue('capabilityLayout', this.capabilityLayoutVersion);
         }
     }
 
@@ -102,9 +109,11 @@ class NetworkSwitchDevice extends PoePowerMixin(Device) {
     }
 
     async _ensureCapabilities(status) {
-        for (const cap of SENSOR_CAPABILITIES) {
+        for (const cap of this.sensorCapabilities) {
             if (cap in status.caps && !this.hasCapability(cap)) {
                 await this.addCapability(cap);
+                const title = this.capabilityTitles[cap];
+                if (title) await this.setCapabilityOptions(cap, {title});
             }
         }
 
@@ -113,7 +122,7 @@ class NetworkSwitchDevice extends PoePowerMixin(Device) {
             if (!this.hasCapability(linkCap)) await this.addCapability(linkCap);
             await this._setTitle(linkCap, port.name);
 
-            if (port.poeCapable) {
+            if (port.poeCapable && this.supportsPoeControl) {
                 const poeCap = `poe.port_${port.idx}`;
                 if (!this.hasCapability(poeCap)) await this.addCapability(poeCap);
                 await this._setTitle(poeCap, `PoE ${port.name}`);
@@ -151,7 +160,7 @@ class NetworkSwitchDevice extends PoePowerMixin(Device) {
     }
 
     async _applyStatus(data, firmware = null) {
-        const status = parseSwitchStatus(data);
+        const status = this.parseStatus(data);
         if (firmware) status.caps.alarm_firmware_update = firmware.updateAvailable;
         await this._enqueue(() => this._ensureCapabilities(status));
         this._updatePorts(status.ports);
@@ -161,7 +170,7 @@ class NetworkSwitchDevice extends PoePowerMixin(Device) {
         }
         for (const port of status.ports) {
             this._setValue(`port.port_${port.idx}`, port.up);
-            if (port.poeCapable) this._setValue(`poe.port_${port.idx}`, port.poeEnabled);
+            if (port.poeCapable && this.supportsPoeControl) this._setValue(`poe.port_${port.idx}`, port.poeEnabled);
         }
     }
 

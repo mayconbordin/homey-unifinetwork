@@ -5,6 +5,9 @@ const Unifi = require('node-unifi');
 const WebsocketClient = require('./websocket');
 const UnifiApiKeyController = require('./unifi-apikey-controller');
 
+// UniFi device types for gateways: Dream Machine / Cloud Gateway (udm), USG (ugw), Next-Gen Gateway (uxg)
+const GATEWAY_TYPES = ['udm', 'ugw', 'uxg'];
+
 class ApiClient extends BaseClass {
 
     constructor({homey}) {
@@ -110,6 +113,12 @@ class ApiClient extends BaseClass {
         const response = await this.unifi.getAccessDevices();
         if (!Array.isArray(response)) throw new Error('Error obtaining network switches.');
         return response.filter(obj => obj.type === 'usw');
+    }
+
+    async getGateways() {
+        const response = await this.unifi.getAccessDevices();
+        if (!Array.isArray(response)) throw new Error('Error obtaining gateways.');
+        return response.filter(obj => obj.adopted === true && GATEWAY_TYPES.includes(obj.type));
     }
 
     /** Get a single adopted device (switch / AP) from /stat/device by MAC. */

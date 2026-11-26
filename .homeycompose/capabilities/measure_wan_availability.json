@@ -1,0 +1,20 @@
+{
+  "type": "number",
+  "title": {
+    "en": "Internet availability (24 h)",
+    "nl": "Internetbeschikbaarheid (24 u)",
+    "de": "Internet-Verfügbarkeit (24 h)",
+    "pt": "Disponibilidade da internet (24 h)"
+  },
+  "units": {
+    "en": "%"
+  },
+  "getable": true,
+  "setable": false,
+  "uiComponent": "sensor",
+  "insights": true,
+  "min": 0,
+  "max": 100,
+  "decimals": 2,
+  "icon": "./assets/signal.svg"
+}

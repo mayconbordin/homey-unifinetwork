@@ -10,9 +10,13 @@ class NetworkSwitch extends Driver {
     /**
      * onInit is called when the driver is initialized.
      */
+    // Overridden by the gateway driver, which reuses this class
+    get flowPrefix() { return 'network_switch'; }
+    async listUnifiDevices() { return this.homey.app.api.getNetworkSwitches(); }
+
     async onInit() {
         this._initFlowCards();
-        this.log('Network-Switch has been initialized');
+        this.log(`${this.constructor.name} has been initialized`);
     }
 
     _initFlowCards() {
@@ -23,18 +27,19 @@ class NetworkSwitch extends Driver {
             const q = (query || '').toLowerCase();
             return items.filter(item => item.name.toLowerCase().includes(q));
         };
+        const id = name => `${this.flowPrefix}_${name}`;
         const portMatches = (args, state) => args.port && (args.port.id === 0 || args.port.id === state.port);
 
-        this.portLinkUp = this.homey.flow.getDeviceTriggerCard('network_switch_port_link_up');
-        this.portLinkDown = this.homey.flow.getDeviceTriggerCard('network_switch_port_link_down');
-        this.portSpeedChanged = this.homey.flow.getDeviceTriggerCard('network_switch_port_speed_changed');
+        this.portLinkUp = this.homey.flow.getDeviceTriggerCard(id('port_link_up'));
+        this.portLinkDown = this.homey.flow.getDeviceTriggerCard(id('port_link_down'));
+        this.portSpeedChanged = this.homey.flow.getDeviceTriggerCard(id('port_speed_changed'));
         for (const card of [this.portLinkUp, this.portLinkDown, this.portSpeedChanged]) {
             card.registerArgumentAutocompleteListener('port', portAutocomplete(true));
             card.registerRunListener(async (args, state) => portMatches(args, state));
         }
-        this.firmwareUpdateAvailable = this.homey.flow.getDeviceTriggerCard('network_switch_firmware_update_available');
+        this.firmwareUpdateAvailable = this.homey.flow.getDeviceTriggerCard(id('firmware_update_available'));
 
-        const portIsUp = this.homey.flow.getConditionCard('network_switch_port_is_up');
+        const portIsUp = this.homey.flow.getConditionCard(id('port_is_up'));
         portIsUp.registerArgumentAutocompleteListener('port', portAutocomplete(false));
         portIsUp.registerRunListener(async (args) => {
             const port = args.device.getPort(args.port.id);
@@ -42,7 +47,7 @@ class NetworkSwitch extends Driver {
             return port.up;
         });
 
-        const poeAbove = this.homey.flow.getConditionCard('network_switch_port_poe_above');
+        const poeAbove = this.homey.flow.getConditionCard(id('port_poe_above'));
         poeAbove.registerArgumentAutocompleteListener('port', portAutocomplete(false));
         poeAbove.registerRunListener(async (args) => {
             const port = args.device.getPort(args.port.id);
@@ -50,12 +55,12 @@ class NetworkSwitch extends Driver {
             return port.poePower > args.watts;
         });
 
-        this.homey.flow.getActionCard('network_switch_restart').registerRunListener(async (args) => {
-            await this._runAction('network_switch_restart', () => this.homey.app.api.restartDevice(args.device.getData().id));
+        this.homey.flow.getActionCard(id('restart')).registerRunListener(async (args) => {
+            await this._runAction(id('restart'), () => this.homey.app.api.restartDevice(args.device.getData().id));
         });
 
-        this.homey.flow.getActionCard('network_switch_locate').registerRunListener(async (args) => {
-            await this._runAction('network_switch_locate', () => this.homey.app.api.setDeviceLocate(args.device.getData().id, args.state === 'on'));
+        this.homey.flow.getActionCard(id('locate')).registerRunListener(async (args) => {
+            await this._runAction(id('locate'), () => this.homey.app.api.setDeviceLocate(args.device.getData().id, args.state === 'on'));
         });
     }
 
@@ -84,7 +89,7 @@ class NetworkSwitch extends Driver {
         }
 
         try {
-            return Object.values(await this.homey.app.api.getNetworkSwitches()).map(device => {
+            return Object.values(await this.listUnifiDevices()).map(device => {
                 let deviceName = this.homey.app.api.getDeviceName(device);
 
                 return {
@@ -93,7 +98,7 @@ class NetworkSwitch extends Driver {
                 };
             });
         } catch (error) {
-            this.homey.app.error(`[network-switch][pair] ${error.message || error}`);
+            this.homey.app.error(`[${this.id}][pair] ${error.message || error}`);
             throw new Error(noControllerConnectionError);
         }
     }

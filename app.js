@@ -200,11 +200,13 @@ class UnifiNetwork extends Homey.App {
             try { return this.homey.drivers.getDriver(name); } catch (e) { return null; } // driver not ready yet
         };
 
-        if (payload.type === 'usw') {
-            const switchDriver = getDriver('network-switch');
-            const switchDevice = switchDriver && switchDriver.getUnifiDeviceById(payload.mac);
-            if (switchDevice) {
-                switchDevice.onStatusChange(payload);
+        const switchLikeDriver = payload.type === 'usw' ? 'network-switch'
+            : ['udm', 'ugw', 'uxg'].includes(payload.type) ? 'gateway' : null;
+        if (switchLikeDriver) {
+            const driver = getDriver(switchLikeDriver);
+            const device = driver && driver.getUnifiDeviceById(payload.mac);
+            if (device) {
+                device.onStatusChange(payload);
             }
         } else if (payload.type === 'uap') {
             const apDriver = getDriver('access-point');

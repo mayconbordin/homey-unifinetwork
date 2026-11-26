@@ -23,6 +23,7 @@ jest.mock('node-unifi', () => ({
         getAccessDevices: jest.fn().mockResolvedValue([
             { mac: 'dd:ee:ff:00:11:22', type: 'uap', adopted: true, name: 'LivingRoomAP', ip: '192.168.1.2' },
             { mac: 'aa:bb:cc:11:22:33', type: 'usw', adopted: true, name: 'MainSwitch', ip: '192.168.1.3' },
+            { mac: 'a8:9c:6c:82:cd:88', type: 'udm', adopted: true, name: 'Cloud Gateway Fiber', ip: '192.168.0.64' },
         ]),
         blockClient: jest.fn().mockResolvedValue(true),
         unblockClient: jest.fn().mockResolvedValue(true),
@@ -89,6 +90,13 @@ describe('ApiClient', () => {
             const switches = await client.getNetworkSwitches();
             expect(switches).toHaveLength(1);
             expect(switches[0].type).toBe('usw');
+        });
+    });
+
+    describe('getGateways()', () => {
+        it('returns only adopted gateways', async () => {
+            const gateways = await client.getGateways();
+            expect(gateways.map(g => g.mac)).toEqual(['a8:9c:6c:82:cd:88']);
         });
     });
 

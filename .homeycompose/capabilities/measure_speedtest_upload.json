@@ -1,0 +1,19 @@
+{
+  "type": "number",
+  "title": {
+    "en": "Speed test upload",
+    "nl": "Snelheidstest upload",
+    "de": "Speedtest Upload",
+    "pt": "Upload do teste de velocidade"
+  },
+  "units": {
+    "en": "Mbit/s"
+  },
+  "getable": true,
+  "setable": false,
+  "uiComponent": "sensor",
+  "insights": true,
+  "min": 0,
+  "decimals": 0,
+  "icon": "./assets/traffic.svg"
+}

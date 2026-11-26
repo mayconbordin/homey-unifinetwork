@@ -1,0 +1,46 @@
+{
+  "id": "gateway",
+  "platforms": [
+    "local"
+  ],
+  "connectivity": [
+    "lan"
+  ],
+  "name": {
+    "en": "Gateway",
+    "nl": "Gateway",
+    "es": "Puerta de enlace",
+    "de": "Gateway",
+    "fr": "Passerelle",
+    "it": "Gateway",
+    "da": "Gateway",
+    "sv": "Gateway",
+    "no": "Gateway",
+    "ko": "게이트웨이",
+    "ru": "Шлюз",
+    "pt": "Gateway",
+    "pl": "Brama"
+  },
+  "images": {
+    "xlarge": "drivers/gateway/assets/images/xlarge.png",
+    "large": "drivers/gateway/assets/images/large.png",
+    "small": "drivers/gateway/assets/images/small.png"
+  },
+  "class": "sensor",
+  "capabilities": [
+    "connected"
+  ],
+  "pair": [
+    {
+      "id": "list_clients",
+      "template": "list_devices",
+      "navigation": {
+        "next": "add_clients"
+      }
+    },
+    {
+      "id": "add_clients",
+      "template": "add_devices"
+    }
+  ]
+}
